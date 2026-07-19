@@ -88,18 +88,18 @@ export default function Tienda({ catalogo }) {
               <h1>Productos <em>importados</em>,<br />precio final <em>por unidad</em></h1>
               <p>Elegí tus productos, armá tu pedido y envialo por WhatsApp. El envío nacional se calcula solo, según el peso.</p>
               <div className="hero-marks">
-                <span>🚚 Envío a todo el país</span>
-                <span>💵 Pagá en pesos al valor del USDT del día</span>
-                <span>🛒 Compra mínima US$250</span>
-                <span>🔄 Stock actualizado a diario</span>
+                <span className="mark"><i>🚚</i><b>Envío a todo el país</b><small>llega hasta tu ciudad</small></span>
+                <span className="mark"><i>🎁</i><b>Envío gratis +US$500</b><small>hasta 10 kg de pedido</small></span>
+                <span className="mark"><i>💵</i><b>Pagá en pesos</b><small>al valor del USDT del día</small></span>
+                <span className="mark"><i>📦</i><b>{catalogo.productos.length.toLocaleString('es-AR')} productos</b><small>de stock real</small></span>
+                <span className="mark"><i>🛒</i><b>Compra mínima US$250</b><small>por pedido</small></span>
+                <span className="mark"><i>🔄</i><b>Actualizado a diario</b><small>precios y stock de hoy</small></span>
               </div>
             </div>
             <div className="hero-visual">
               <div className="hero-logo-card">
                 <img src="https://raw.githubusercontent.com/francatamarca/fvr-catalogo/main/public/logo-fvr.jpg" alt="FVR" />
               </div>
-              <div className="hero-chip chip-a">🎁 <b>Envío gratis</b><span>pedidos +US$500 (hasta 10 kg)</span></div>
-              <div className="hero-chip chip-b">📦 <b>{catalogo.productos.length.toLocaleString('es-AR')} productos</b><span>de stock real</span></div>
             </div>
           </div>
         </div>

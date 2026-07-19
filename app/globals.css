@@ -55,13 +55,13 @@ header.top {
 
 .search { flex: 1; position: relative; max-width: 620px; margin-left: auto; }
 .search input {
-  width: 100%; padding: 12px 40px 12px 44px; border: 1.5px solid var(--line);
-  border-radius: 999px; font-size: 14.5px; background: #f6f7fa; outline: none; transition: .18s;
-  font-family: inherit;
+  width: 100%; padding: 15px 44px 15px 48px; border: 2px solid #ffd9b8;
+  border-radius: 999px; font-size: 15px; background: #fff; outline: none; transition: .18s;
+  font-family: inherit; box-shadow: 0 4px 18px rgba(255,122,26,.13), var(--shadow-sm);
 }
-.search input::placeholder { color: #9aa3b5; }
-.search input:focus { border-color: var(--accent); background: #fff; box-shadow: 0 0 0 4px rgba(255,122,26,.13); }
-.search svg { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #9aa3b5; pointer-events: none; }
+.search input::placeholder { color: #8a94a6; font-weight: 500; }
+.search input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px rgba(255,122,26,.16), 0 4px 18px rgba(255,122,26,.15); }
+.search svg { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); color: var(--accent-dark); pointer-events: none; }
 .search .clear { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); border: none; background: #e8ebf2; color: var(--muted); width: 26px; height: 26px; border-radius: 50%; cursor: pointer; font-size: 15px; line-height: 1; }
 
 /* ---------- Hero (estilo FVR Sourcing: claro, con acentos naranjas) ---------- */
@@ -84,8 +84,18 @@ header.top {
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
 .hero p { margin: 0; color: var(--muted); font-size: 15px; max-width: 480px; line-height: 1.55; }
-.hero-marks { display: flex; flex-wrap: wrap; gap: 7px 18px; margin-top: 18px; }
-.hero-marks span { font-size: 12.5px; font-weight: 600; color: #3d4757; }
+.hero-marks { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin-top: 20px; max-width: 640px; }
+.hero-marks .mark {
+  display: grid; grid-template-columns: 34px 1fr; grid-template-rows: auto auto; column-gap: 9px;
+  background: rgba(255,255,255,.72); border: 1px solid #edeaf2; border-radius: 13px;
+  padding: 10px 12px; backdrop-filter: blur(3px); box-shadow: var(--shadow-sm); align-items: center;
+}
+.hero-marks .mark i {
+  grid-row: 1 / span 2; font-style: normal; font-size: 17px; width: 34px; height: 34px;
+  background: var(--accent-soft); border-radius: 10px; display: grid; place-items: center;
+}
+.hero-marks .mark b { font-size: 12px; color: var(--navy); font-weight: 800; line-height: 1.2; }
+.hero-marks .mark small { font-size: 10.5px; color: var(--muted); line-height: 1.25; }
 .hero-visual { position: relative; display: flex; justify-content: center; align-items: center; min-height: 210px; }
 .hero-logo-card {
   width: 168px; height: 168px; background: #fff; border-radius: 30px; padding: 20px;
@@ -297,6 +307,8 @@ footer .fupd { font-size: 12px; opacity: .75; }
 .trow { display: flex; justify-content: space-between; padding: 6px 0; font-size: 13.5px; color: var(--text); }
 .trow.total { border-top: 1px dashed var(--line); margin-top: 4px; padding-top: 10px; font-size: 16.5px; font-weight: 800; color: var(--navy); }
 .trow.ars { color: var(--muted); font-size: 12.5px; padding-top: 0; }
+.trow.descuento { color: var(--green); font-size: 12.5px; }
+.trow.descuento b { color: var(--green); }
 .cart-min { background: #fff4de; border-top: 1px solid #f0d9a8; color: #7a5a00; font-size: 12.5px; padding: 10px 18px; font-weight: 600; }
 .cart-ok { background: #e8f7ee; border-top: 1px solid #bfe6cf; color: var(--green); font-size: 12.5px; padding: 10px 18px; font-weight: 600; }
 .cart-actions { display: flex; gap: 9px; padding: 12px 18px 6px; background: var(--surface); }
@@ -317,8 +329,11 @@ footer .fupd { font-size: 12px; opacity: .75; }
   .hero-visual { display: none; }
   .hero h1 { font-size: 25px; letter-spacing: -.7px; }
   .hero p { font-size: 13px; }
-  .hero-marks { gap: 6px 14px; margin-top: 14px; }
-  .hero-marks span { font-size: 11.5px; }
+  .hero-marks { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 7px; margin-top: 16px; max-width: none; }
+  .hero-marks .mark { padding: 8px 9px; border-radius: 11px; column-gap: 7px; grid-template-columns: 30px 1fr; }
+  .hero-marks .mark i { width: 30px; height: 30px; font-size: 15px; border-radius: 8px; }
+  .hero-marks .mark b { font-size: 11px; }
+  .hero-marks .mark small { font-size: 9.5px; }
   .toolbar { gap: 7px; }
   .tb-input { width: 90px; }
   .cart-panel { width: 100%; }

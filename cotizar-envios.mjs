@@ -12,10 +12,16 @@ const PESOS = [1, 2, 3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 async function usdtRate() {
+  // valor agregado del dólar cripto (nunca el mínimo de exchanges: un P2P viejo rompe el valor)
+  try {
+    const r = await fetch('https://criptoya.com/api/dolar', { headers: { 'user-agent': UA } });
+    const v = (await r.json())?.cripto?.usdt?.ask;
+    if (typeof v === 'number' && v > 0) return v;
+  } catch {}
   const r = await fetch('https://criptoya.com/api/usdt/ars/1', { headers: { 'user-agent': UA } });
   const j = await r.json();
-  const vals = Object.values(j).map(v => v?.totalAsk || v?.ask).filter(n => typeof n === 'number' && n > 0);
-  return Math.min(...vals);
+  const vals = Object.values(j).map(v => v?.totalAsk || v?.ask).filter(n => typeof n === 'number' && n > 0).sort((a, b) => a - b);
+  return vals[Math.floor(vals.length / 2)];
 }
 
 async function cotizar(page, kg, dims) {

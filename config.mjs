@@ -26,6 +26,8 @@ export function esReacondicionado(titulo = '') {
 export const RECARGOS = [
   { label: 'Microondas +11', usd: 11, test: (titulo, categoria) => /microond/i.test(categoria) || /microondas/i.test(titulo) },
   { label: 'iPhone 17 +10', usd: 10, test: (titulo) => /iphone\s*17/i.test(titulo) },
+  // TVs de 32 y 43 pulgadas (los demás tamaños quedan como están, pendiente análisis de Francisco)
+  { label: 'TV 32/43" +10', usd: 10, test: (titulo, categoria) => (/\btv\b|televis/i.test(`${titulo} ${categoria}`)) && /\b(32|43)\s*(''|"|”|´´|pulg)/i.test(titulo) },
 ];
 export function recargoPara(titulo = '', categoria = '') {
   let total = 0;

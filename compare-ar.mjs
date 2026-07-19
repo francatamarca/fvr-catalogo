@@ -13,12 +13,17 @@ const FUENTES = [
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
-// ---------- cotización USDT (CriptoYa, la más conveniente como en la web) ----------
+// ---------- cotización USDT (CriptoYa agregado; respaldo: mediana de exchanges) ----------
 async function usdtRate() {
+  try {
+    const r = await fetch('https://criptoya.com/api/dolar', { headers: { 'user-agent': UA } });
+    const v = (await r.json())?.cripto?.usdt?.ask;
+    if (typeof v === 'number' && v > 0) return v;
+  } catch {}
   const r = await fetch('https://criptoya.com/api/usdt/ars/1', { headers: { 'user-agent': UA } });
   const j = await r.json();
-  const vals = Object.values(j).map(v => v?.totalAsk || v?.ask).filter(n => typeof n === 'number' && n > 0);
-  return Math.min(...vals);
+  const vals = Object.values(j).map(v => v?.totalAsk || v?.ask).filter(n => typeof n === 'number' && n > 0).sort((a, b) => a - b);
+  return vals[Math.floor(vals.length / 2)];
 }
 
 // ---------- armar consulta desde el título de Madrid Center ----------

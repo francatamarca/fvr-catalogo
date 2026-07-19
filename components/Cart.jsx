@@ -69,6 +69,9 @@ export default function Cart() {
                   <div className="trow"><span>Subtotal ({tot.unidades} u.)</span><b>US$ {tot.subtotal.toLocaleString('es-AR')}</b></div>
                   {tot.subGen > 0 && <div className="trow"><span>Peso{tot.pesoEstimado ? ' aprox.' : ''}</span><b>{tot.peso.toLocaleString('es-AR')} kg</b></div>}
                   <div className="trow"><span>Envío nacional</span><b style={{ color: tot.gratis || tot.subGen === 0 ? 'var(--green)' : tot.consultar ? 'var(--accent-dark)' : 'inherit' }}>{tot.envioTxt}</b></div>
+                  {tot.descuentoEnvio > 0 && (
+                    <div className="trow descuento"><span>🎁 Descuento en envío (10 kg gratis)</span><b>−US$ {tot.descuentoEnvio.toLocaleString('es-AR')}</b></div>
+                  )}
                   <div className="trow total"><span>TOTAL</span><b>US$ {tot.total.toLocaleString('es-AR')}{tot.consultar ? ' + envío' : ''}</b></div>
                   {rate ? <div className="trow ars"><span>≈ en pesos hoy</span><span>${Math.round(tot.total * rate).toLocaleString('es-AR')}</span></div> : null}
                 </div>
