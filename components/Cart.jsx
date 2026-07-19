@@ -79,10 +79,27 @@ export default function Cart() {
                   {rate ? <div className="trow ars"><span>≈ en pesos hoy</span><span>${Math.round(tot.total * rate).toLocaleString('es-AR')}</span></div> : null}
                 </div>
 
+                {tot.subGen > 0 && (
+                  <div className="beneficios">
+                    {tot.falta500 > 0 ? (
+                      <>
+                        <div className="ben-bar"><div className="ben-fill" style={{ width: `${Math.min(100, tot.subGen / 5)}%` }} /></div>
+                        <div className="ben-txt">💡 Sumá <b>US$ {tot.falta500.toLocaleString('es-AR')}</b> más y conseguí {tot.peso <= 10 ? <b>ENVÍO GRATIS</b> : <><b>10 kg de envío gratis</b> (−US$ {tot.bonif10})</>} 🚚</div>
+                      </>
+                    ) : tot.falta1000 > 0 ? (
+                      <>
+                        <div className="ben-done">✓ Envío bonificado conseguido</div>
+                        <div className="ben-bar"><div className="ben-fill" style={{ width: `${Math.min(100, (tot.subGen - 500) / 5)}%` }} /></div>
+                        <div className="ben-txt">💡 Sumá <b>US$ {tot.falta1000.toLocaleString('es-AR')}</b> más y todos tus productos pasan a <b>precio por mayor</b> 🎉</div>
+                      </>
+                    ) : (
+                      <div className="ben-done">🏆 ¡Beneficios máximos! Envío bonificado + precio por mayor aplicados.</div>
+                    )}
+                  </div>
+                )}
+
                 {!tot.minimoOk ? (
                   <div className="cart-min">⚠️ La compra mínima es <b>US$ {COMPRA_MINIMA}</b> — te faltan US$ {tot.faltaMinimo.toLocaleString('es-AR')}.</div>
-                ) : tot.falta1000 > 0 && tot.falta1000 <= 400 ? (
-                  <div className="cart-hint">💡 Sumá US$ {tot.falta1000.toLocaleString('es-AR')} más en productos y tu pedido pasa a <b>precio por mayor</b> (descuento +US$1000).</div>
                 ) : (
                   <div className="cart-ok">✅ Listo para enviar: copiá el pedido y pegalo en el WhatsApp de tu vendedor FVR.</div>
                 )}
