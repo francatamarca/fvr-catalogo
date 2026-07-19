@@ -3,18 +3,23 @@ import { RateProvider } from '../components/RateContext';
 import UsdtBar from '../components/UsdtBar';
 import Logo from '../components/Logo';
 
+const RAW = 'https://raw.githubusercontent.com/francatamarca/fvr-catalogo/main';
+const OG = `${RAW}/app/opengraph-image.jpg`;
+
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://fvr-catalogo.vercel.app'),
   title: 'FVR Logística Internacional — Catálogo de importación',
   description: 'Catálogo de productos importados con envío a todo el país. Precios en USDT actualizados en tiempo real.',
+  icons: { icon: `${RAW}/app/icon.jpg`, apple: `${RAW}/app/icon.jpg` },
   openGraph: {
     title: 'FVR Logística Internacional — Catálogo de importación',
     description: 'Cientos de productos importados con envío a todo el país. Precios en USDT en vivo.',
     type: 'website',
     locale: 'es_AR',
     siteName: 'FVR Logística Internacional',
+    images: [{ url: OG, width: 1200, height: 630 }],
   },
-  twitter: { card: 'summary_large_image' },
+  twitter: { card: 'summary_large_image', images: [OG] },
 };
 
 export default function RootLayout({ children }) {
