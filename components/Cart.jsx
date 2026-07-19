@@ -66,7 +66,10 @@ export default function Cart() {
                 </div>
 
                 <div className="cart-totals">
-                  <div className="trow"><span>Subtotal ({tot.unidades} u.)</span><b>US$ {tot.subtotal.toLocaleString('es-AR')}</b></div>
+                  <div className="trow"><span>Subtotal ({tot.unidades} u.)</span><b>US$ {tot.subtotalBruto.toLocaleString('es-AR')}</b></div>
+                  {tot.descuento1000 > 0 && (
+                    <div className="trow descuento"><span>🎉 Descuento pedido +US$1000</span><b>−US$ {tot.descuento1000.toLocaleString('es-AR')}</b></div>
+                  )}
                   {tot.subGen > 0 && <div className="trow"><span>Peso{tot.pesoEstimado ? ' aprox.' : ''}</span><b>{tot.peso.toLocaleString('es-AR')} kg</b></div>}
                   <div className="trow"><span>Envío nacional</span><b style={{ color: tot.gratis || tot.subGen === 0 ? 'var(--green)' : tot.consultar ? 'var(--accent-dark)' : 'inherit' }}>{tot.envioTxt}</b></div>
                   {tot.descuentoEnvio > 0 && (
@@ -78,6 +81,8 @@ export default function Cart() {
 
                 {!tot.minimoOk ? (
                   <div className="cart-min">⚠️ La compra mínima es <b>US$ {COMPRA_MINIMA}</b> — te faltan US$ {tot.faltaMinimo.toLocaleString('es-AR')}.</div>
+                ) : tot.falta1000 > 0 && tot.falta1000 <= 400 ? (
+                  <div className="cart-hint">💡 Sumá US$ {tot.falta1000.toLocaleString('es-AR')} más en productos y tu pedido pasa a <b>precio por mayor</b> (descuento +US$1000).</div>
                 ) : (
                   <div className="cart-ok">✅ Listo para enviar: copiá el pedido y pegalo en el WhatsApp de tu vendedor FVR.</div>
                 )}

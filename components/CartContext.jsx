@@ -24,7 +24,7 @@ export function CartProvider({ children, envios = null }) {
       const i = prev.findIndex(x => x.codigo === p.codigo);
       if (i >= 0) { const n = [...prev]; n[i] = { ...n[i], qty: n[i].qty + qty }; return n; }
       const precioUnit = p.precio.via === 'fija' ? p.precio.final_usd : p.precio.precio_unit_usd;
-      return [...prev, { codigo: p.codigo, titulo: p.titulo, img: p.img, via: p.precio.via, precioUnit, pesoKg: p.pesoKg ?? null, vol: p.vol ?? null, qty }];
+      return [...prev, { codigo: p.codigo, titulo: p.titulo, img: p.img, via: p.precio.via, precioUnit, m25: !!p.precio.m25, pesoKg: p.pesoKg ?? null, vol: p.vol ?? null, qty }];
     });
     setAbierto(true);
   }, []);
