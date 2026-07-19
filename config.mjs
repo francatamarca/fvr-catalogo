@@ -36,6 +36,12 @@ export function recargoPara(titulo = '', categoria = '') {
 // Sin ruta para bultos grandes por ahora: los productos de más de este peso NO se publican.
 export const PESO_MAX_KG = 60;
 
+// Exclusiones especiales: productos que no se pueden traer aunque no declaren peso
+// (las motos eléctricas seguro superan los 60kg). Revisar más adelante si Francisco consigue ruta.
+export function esExcluidoEspecial(titulo = '', categoria = '') {
+  return /moto\w*\s+el[ée]ctric|autopropelid|scooter\s+el[ée]ctric/i.test(`${titulo} ${categoria}`);
+}
+
 // Clasificador de categoría-hoja (español + portugués) -> grupo de display. Orden = prioridad.
 const GRUPOS = [
   { nombre: 'Perfumes', emoji: '🌸', re: /perfum|fragr|eau de|colonia|body splash|desodor/i },

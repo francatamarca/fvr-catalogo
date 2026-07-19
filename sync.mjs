@@ -7,7 +7,7 @@ import { precioFVR } from './pricing.mjs';
 import {
   MC_API, MC_HOME, CHROME_PATH, UA, CATEGORIAS_EXCLUIDAS,
   pasaFiltroArgentina, esReacondicionado, grupoDisplay, slugify,
-  recargoPara, PESO_MAX_KG,
+  recargoPara, PESO_MAX_KG, esExcluidoEspecial,
 } from './config.mjs';
 
 const FULL = process.argv.includes('--full');
@@ -86,6 +86,7 @@ async function main() {
       if (!pasaFiltroArgentina(usd, cat)) { ocultosPorPiso++; continue; }
       const pesoKg = p.dimensiones?.peso ?? null;
       if (pesoKg != null && pesoKg > PESO_MAX_KG) { continue; } // sin ruta para bultos grandes por ahora
+      if (esExcluidoEspecial(p.titulo || '', cat)) { continue; } // motos eléctricas etc.
       const grupo = grupoDisplay(cat, nameToTop);
       const precio = precioFVR({ usd, categoria: cat, marca: p.marca, pesoKg, recargo: recargoPara(p.titulo || '', cat) });
       const before = prevMap.get(p.codigo);

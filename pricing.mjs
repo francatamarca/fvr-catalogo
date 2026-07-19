@@ -65,16 +65,18 @@ export function precioFVR(p) {
     };
   }
 
-  // VÍA A — general +35% (+ recargo fijo si aplica). El envío se calcula en el CARRITO por peso total.
-  const unitCeil = ceil(usd * 1.35 + recargo);
+  // VÍA A — general. Margen 35%, salvo productos de más de US$1000 que pesen menos de 5kg
+  // (ej: drones DJI) -> 25%. El envío se calcula en el CARRITO por peso total.
+  const margen = (usd > 1000 && pesoKg != null && pesoKg < 5) ? 1.25 : 1.35;
+  const unitCeil = ceil(usd * margen + recargo);
 
   return {
     via: 'general',
     base_usd: usd,
-    margen: '+35%',
+    margen: margen === 1.25 ? '+25%' : '+35%',
     recargo_usd: recargo || 0,
     precio_unit_usd: unitCeil,
     peso_kg: pesoKg,
-    envio_gratis_desde: 400,
+    envio_gratis_desde: 500,
   };
 }

@@ -2,12 +2,15 @@
 // SIN llamar a Madrid Center. Usar tras cambiar reglas en config.mjs / pricing.mjs.
 import { readFile, writeFile } from 'node:fs/promises';
 import { precioFVR } from './pricing.mjs';
-import { recargoPara, PESO_MAX_KG } from './config.mjs';
+import { recargoPara, PESO_MAX_KG, esExcluidoEspecial } from './config.mjs';
 
 const c = JSON.parse(await readFile('./data/catalogo.json', 'utf8'));
 const antes = c.productos.length;
 
-c.productos = c.productos.filter(p => !(p.pesoKg != null && p.pesoKg > PESO_MAX_KG));
+c.productos = c.productos.filter(p =>
+  !(p.pesoKg != null && p.pesoKg > PESO_MAX_KG) &&
+  !esExcluidoEspecial(p.titulo || '', p.categoria || '')
+);
 const sacadosPeso = antes - c.productos.length;
 
 let conRecargo = 0;

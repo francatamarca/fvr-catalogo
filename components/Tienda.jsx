@@ -98,7 +98,7 @@ export default function Tienda({ catalogo }) {
               <div className="hero-logo-card">
                 <img src="https://raw.githubusercontent.com/francatamarca/fvr-catalogo/main/public/logo-fvr.jpg" alt="FVR" />
               </div>
-              <div className="hero-chip chip-a">🎁 <b>Envío gratis</b><span>en compras desde US$400</span></div>
+              <div className="hero-chip chip-a">🎁 <b>Envío gratis</b><span>pedidos +US$500 (hasta 10 kg)</span></div>
               <div className="hero-chip chip-b">📦 <b>{catalogo.productos.length.toLocaleString('es-AR')} productos</b><span>de stock real</span></div>
             </div>
           </div>
