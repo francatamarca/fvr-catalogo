@@ -1,0 +1,10 @@
+import puppeteer from 'puppeteer-core';
+const CHROME = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
+const b = await puppeteer.launch({ executablePath: CHROME, headless: 'new', args: ['--no-sandbox'] });
+const page = await b.newPage();
+await page.setViewport({ width: 1366, height: 950 });
+await page.goto('https://fvr-sourcing.vercel.app/', { waitUntil: 'networkidle2', timeout: 60000 });
+await new Promise(r => setTimeout(r, 2500));
+await page.screenshot({ path: 'ref-sourcing.png' });
+await b.close();
+console.log('OK');

@@ -7,6 +7,7 @@ import { precioFVR } from './pricing.mjs';
 import {
   MC_API, MC_HOME, CHROME_PATH, UA, CATEGORIAS_EXCLUIDAS,
   pasaFiltroArgentina, esReacondicionado, grupoDisplay, slugify,
+  recargoPara, PESO_MAX_KG,
 } from './config.mjs';
 
 const FULL = process.argv.includes('--full');
@@ -83,8 +84,10 @@ async function main() {
       if (usd == null) continue;
       if (excluida(cat)) { excluidos++; continue; }
       if (!pasaFiltroArgentina(usd, cat)) { ocultosPorPiso++; continue; }
+      const pesoKg = p.dimensiones?.peso ?? null;
+      if (pesoKg != null && pesoKg > PESO_MAX_KG) { continue; } // sin ruta para bultos grandes por ahora
       const grupo = grupoDisplay(cat, nameToTop);
-      const precio = precioFVR({ usd, categoria: cat, marca: p.marca, pesoKg: p.dimensiones?.peso ?? null });
+      const precio = precioFVR({ usd, categoria: cat, marca: p.marca, pesoKg, recargo: recargoPara(p.titulo || '', cat) });
       const before = prevMap.get(p.codigo);
       productos.push({
         codigo: p.codigo, titulo: p.titulo, slug: p.slug, marca: p.marca,
@@ -92,7 +95,7 @@ async function main() {
         img: p.imagen_principal?.url_optimizada || p.imagen_principal?.url_original || null,
         imgs: (p.imagenes_adicionales || []).map(i => i.url_optimizada || i.url_original).filter(Boolean).slice(0, 5),
         madridUSD: usd, descuento: p.precio?.descuento_porcentaje || null,
-        pesoKg: p.dimensiones?.peso ?? null, stock: p.stock?.cantidad ?? null,
+        pesoKg, stock: p.stock?.cantidad ?? null,
         reacond: esReacondicionado(p.titulo),
         specs: (p.especificaciones_destacadas || []).map(s => ({ n: s.nombre, v: s.valor })),
         precio,

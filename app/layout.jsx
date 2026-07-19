@@ -1,6 +1,8 @@
 import './globals.css';
 import { Plus_Jakarta_Sans } from 'next/font/google';
 import { RateProvider } from '../components/RateContext';
+import { CartProvider } from '../components/CartContext';
+import Cart from '../components/Cart';
 import UsdtBar from '../components/UsdtBar';
 import Logo from '../components/Logo';
 import { getCatalogo } from '../lib/catalogo';
@@ -36,6 +38,7 @@ export default async function RootLayout({ children }) {
     <html lang="es">
       <body className={jakarta.className}>
         <RateProvider>
+          <CartProvider>
           <UsdtBar />
           <header className="top">
             <div className="container top-row">
@@ -43,6 +46,7 @@ export default async function RootLayout({ children }) {
             </div>
           </header>
           {children}
+          <Cart />
           <footer>
             <div className="container fl">
               <div>
@@ -55,6 +59,7 @@ export default async function RootLayout({ children }) {
               </div>
             </div>
           </footer>
+          </CartProvider>
         </RateProvider>
       </body>
     </html>

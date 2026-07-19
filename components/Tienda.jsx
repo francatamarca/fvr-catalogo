@@ -2,12 +2,15 @@
 import { useMemo, useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRate } from './RateContext';
+import { useCart } from './CartContext';
 import { priceView, ars } from '../lib/format';
 
 const norm = s => (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+const precioDe = p => p.precio.via === 'fija' ? p.precio.final_usd : p.precio.precio_unit_usd;
 
 function Card({ p, rate }) {
   const pv = priceView(p);
+  const { agregar } = useCart();
   return (
     <Link href={`/producto/${p.codigo}`} className="card">
       <div className="imgwrap">
@@ -28,7 +31,9 @@ function Card({ p, rate }) {
           </div>
           {rate ? <div className="price-ars">{ars(pv.main, rate)}</div> : null}
           <div className={`ship-note ${pv.noteClass}`}>{pv.note}</div>
-          {pv.combo ? <div className="ship-note combo">{pv.combo}</div> : null}
+          <button className="btn-add" onClick={e => { e.preventDefault(); e.stopPropagation(); agregar(p, 1); }}>
+            + Agregar
+          </button>
         </div>
       </div>
     </Link>
@@ -39,22 +44,33 @@ export default function Tienda({ catalogo }) {
   const rate = useRate();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('all');
+  const [orden, setOrden] = useState('relevancia');
+  const [pMin, setPMin] = useState('');
+  const [pMax, setPMax] = useState('');
   const [limit, setLimit] = useState(48);
   const catRef = useRef(null);
-  useEffect(() => { setLimit(48); }, [q, cat]);
+  useEffect(() => { setLimit(48); }, [q, cat, orden, pMin, pMax]);
 
   const tokens = norm(q).split(/\s+/).filter(Boolean);
   const filtrados = useMemo(() => {
-    return catalogo.productos.filter(p => {
+    let r = catalogo.productos.filter(p => {
       if (cat !== 'all' && p.catSlug !== cat) return false;
-      if (!tokens.length) return true;
-      const hay = norm(`${p.titulo} ${p.marca} ${p.categoria}`);
-      return tokens.every(t => hay.includes(t));
+      if (tokens.length) {
+        const hay = norm(`${p.titulo} ${p.marca} ${p.categoria}`);
+        if (!tokens.every(t => hay.includes(t))) return false;
+      }
+      const precio = precioDe(p);
+      if (pMin !== '' && precio < Number(pMin)) return false;
+      if (pMax !== '' && precio > Number(pMax)) return false;
+      return true;
     });
-  }, [catalogo.productos, cat, q]);
+    if (orden === 'menor') r = [...r].sort((a, b) => precioDe(a) - precioDe(b));
+    else if (orden === 'mayor') r = [...r].sort((a, b) => precioDe(b) - precioDe(a));
+    return r;
+  }, [catalogo.productos, cat, q, orden, pMin, pMax]);
 
   const buscando = tokens.length > 0;
-  const enHome = !buscando && cat === 'all';
+  const enHome = !buscando && cat === 'all' && pMin === '' && pMax === '';
   const ofertas = enHome ? catalogo.productos.filter(p => p.descuento) : [];
 
   const irACategoria = (slug) => {
@@ -66,14 +82,24 @@ export default function Tienda({ catalogo }) {
     <>
       {enHome && (
         <div className="hero">
-          <div className="container">
-            <h1>📦 Importá desde Paraguay, recibilo en tu casa</h1>
-            <p>Catálogo actualizado a diario con precio final en USDT. Sin sorpresas.</p>
-            <div className="props">
-              <span className="prop"><span className="ico">🚚</span> Envío a todo el país</span>
-              <span className="prop"><span className="ico">🎁</span> Envío gratis en compras desde US$400</span>
-              <span className="prop"><span className="ico">🪙</span> Pagás en USDT al valor del día</span>
-              <span className="prop"><span className="ico">🔄</span> Stock y precios de hoy</span>
+          <div className="container hero-grid">
+            <div>
+              <span className="hero-pill">✈️ Por FVR Logística Internacional</span>
+              <h1>Productos <em>importados</em>,<br />precio final <em>por unidad</em></h1>
+              <p>Elegí tus productos, armá tu pedido y envialo por WhatsApp. El envío nacional se calcula solo, según el peso.</p>
+              <div className="hero-marks">
+                <span>🚚 Envío a todo el país</span>
+                <span>💵 Pagá en pesos al valor del USDT del día</span>
+                <span>🛒 Compra mínima US$250</span>
+                <span>🔄 Stock actualizado a diario</span>
+              </div>
+            </div>
+            <div className="hero-visual">
+              <div className="hero-logo-card">
+                <img src="https://raw.githubusercontent.com/francatamarca/fvr-catalogo/main/public/logo-fvr.jpg" alt="FVR" />
+              </div>
+              <div className="hero-chip chip-a">🎁 <b>Envío gratis</b><span>en compras desde US$400</span></div>
+              <div className="hero-chip chip-b">📦 <b>{catalogo.productos.length.toLocaleString('es-AR')} productos</b><span>de stock real</span></div>
             </div>
           </div>
         </div>
@@ -129,6 +155,20 @@ export default function Tienda({ catalogo }) {
             ))}
           </div>
 
+          <div className="toolbar">
+            <select className="tb-select" value={orden} onChange={e => setOrden(e.target.value)}>
+              <option value="relevancia">Ordenar: Relevancia</option>
+              <option value="menor">Precio: menor a mayor</option>
+              <option value="mayor">Precio: mayor a menor</option>
+            </select>
+            <div className="tb-range">
+              <input className="tb-input" type="number" min="0" placeholder="Precio mín." value={pMin} onChange={e => setPMin(e.target.value)} />
+              <span className="tb-sep">—</span>
+              <input className="tb-input" type="number" min="0" placeholder="Precio máx." value={pMax} onChange={e => setPMax(e.target.value)} />
+              {(pMin !== '' || pMax !== '') && <button className="tb-clear" onClick={() => { setPMin(''); setPMax(''); }}>Limpiar</button>}
+            </div>
+          </div>
+
           <div className="section-title">
             {buscando ? `Resultados para "${q}"` : cat === 'all' ? 'Catálogo completo' : `${catalogo.categorias.find(c => c.slug === cat)?.emoji ?? ''} ${catalogo.categorias.find(c => c.slug === cat)?.nombre ?? ''}`}
           </div>
@@ -137,7 +177,7 @@ export default function Tienda({ catalogo }) {
           {filtrados.length === 0 ? (
             <div className="empty">
               <div className="big">🔍</div>
-              No encontramos productos con ese criterio.<br />Probá con otra palabra o mirá las categorías.
+              No encontramos productos con ese criterio.<br />Probá con otra palabra o ajustá los filtros.
             </div>
           ) : (
             <>

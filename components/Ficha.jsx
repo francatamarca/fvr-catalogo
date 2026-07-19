@@ -2,13 +2,16 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRate } from './RateContext';
-import { priceView, ars, usd } from '../lib/format';
+import { useCart } from './CartContext';
+import { priceView, ars } from '../lib/format';
 
 export default function Ficha({ p }) {
   const rate = useRate();
+  const { agregar } = useCart();
   const pv = priceView(p);
   const imgs = [p.img, ...(p.imgs || [])].filter(Boolean);
   const [main, setMain] = useState(imgs[0] || null);
+  const [qty, setQty] = useState(1);
   const [copiado, setCopiado] = useState(false);
   const esGeneral = p.precio.via === 'general';
 
@@ -46,25 +49,22 @@ export default function Ficha({ p }) {
           </div>
 
           <div className="bigprice"><span className="cur">US$ </span>{Number(pv.main).toLocaleString('es-AR')}{esGeneral ? <span style={{ fontSize: 16, color: 'var(--muted)' }}> /u</span> : null}</div>
-          {rate ? <div style={{ color: 'var(--muted)', marginTop: 2, fontSize: 14 }}>{ars(pv.main, rate)} <span style={{ fontSize: 12 }}>(al dólar cripto de hoy)</span></div> : null}
+          {rate ? <div style={{ color: 'var(--muted)', marginTop: 2, fontSize: 14 }}>{ars(pv.main, rate)} <span style={{ fontSize: 12 }}>(en pesos, al valor del USDT de hoy)</span></div> : null}
+
+          <div className="buyrow">
+            <div className="qty-wrap">
+              <button className="qty-btn" onClick={() => setQty(v => Math.max(1, v - 1))}>−</button>
+              <span className="qty-num">{qty}</span>
+              <button className="qty-btn" onClick={() => setQty(v => v + 1)}>+</button>
+            </div>
+            <button className="btn-buy" onClick={() => agregar(p, qty)}>🛒 Agregar a mi pedido</button>
+          </div>
 
           <div className="card-info">
-            {(() => {
-              const gratis = esGeneral && !p.precio.flete_consultar && p.precio.precio_unit_usd >= 400;
-              const verde = !esGeneral || gratis;
-              return <div className="row"><span className="k">Envío nacional</span><span className="v" style={{ color: verde ? 'var(--green)' : 'inherit' }}>
-                {p.precio.via === 'fija' ? 'Incluido hasta tu ciudad ✓'
-                  : p.precio.flete_consultar ? 'A consultar (+15kg)'
-                  : gratis ? 'Gratis ✓ (supera US$400)'
-                  : `+ ${usd(p.precio.flete_usd)}`}
-              </span></div>;
-            })()}
-            {esGeneral && p.precio.combo && p.precio.precio_unit_usd < 400 && !p.precio.flete_consultar ? (
-              <div className="row"><span className="k">Combo envío gratis 🚚</span><span className="v" style={{ color: 'var(--accent-dark)' }}>{p.precio.combo.unidades} u (US$400)</span></div>
-            ) : null}
-            {esGeneral && p.precio.precio_unit_usd < 400 ? (
-              <div className="row"><span className="k">Envío gratis desde</span><span className="v">US$ 400</span></div>
-            ) : null}
+            <div className="row"><span className="k">Envío nacional</span><span className="v" style={{ color: esGeneral ? 'inherit' : 'var(--green)' }}>
+              {esGeneral ? 'Se calcula en tu pedido según el peso' : 'Incluido hasta tu ciudad ✓'}
+            </span></div>
+            <div className="row"><span className="k">Compra mínima</span><span className="v">US$ 250 por pedido</span></div>
             <div className="row"><span className="k">Disponibilidad</span><span className="v" style={{ color: 'var(--green)' }}>En stock ✓</span></div>
             {p.pesoKg ? <div className="row"><span className="k">Peso</span><span className="v">{p.pesoKg} kg</span></div> : null}
           </div>

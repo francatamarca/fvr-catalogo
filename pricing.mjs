@@ -39,17 +39,17 @@ function logisticaFija(tipo, usd, marca = '') {
 
 /**
  * Calcula el precio FVR de un producto.
- * @param {{usd:number, categoria:string, marca:string, pesoKg:number|null}} p
+ * @param {{usd:number, categoria:string, marca:string, pesoKg:number|null, recargo?:number}} p
  * @returns objeto con el precio final y metadata para mostrar / decidir si aparece.
  */
 export function precioFVR(p) {
-  const { usd, categoria = '', marca = '', pesoKg = null } = p;
+  const { usd, categoria = '', marca = '', pesoKg = null, recargo = 0 } = p;
   const tipoFijo = categoriaFija(categoria, marca);
 
   if (tipoFijo) {
     // VÍA B — precio fijo por unidad, envío incluido, SIN combos
     const fija = logisticaFija(tipoFijo, usd, marca);
-    const final = ceil(usd + fija);
+    const final = ceil(usd + fija + recargo);
     const altaGama = (tipoFijo === 'celular')
       ? (marca.toLowerCase().includes('apple') || usd > 600)
       : usd > 2000;
@@ -65,33 +65,16 @@ export function precioFVR(p) {
     };
   }
 
-  // VÍA A — general +35%
-  const unit = usd * 1.35;
-  const flete = fleteNacional(pesoKg);
-  const unitCeil = ceil(unit);
-
-  // combo: unidades para llegar a US$400 (subtotal con 35%) -> envío gratis
-  const unidadesGratis = Math.ceil(400 / unit);
-  const subtotalCombo = ceil(unidadesGratis * unit);
+  // VÍA A — general +35% (+ recargo fijo si aplica). El envío se calcula en el CARRITO por peso total.
+  const unitCeil = ceil(usd * 1.35 + recargo);
 
   return {
     via: 'general',
     base_usd: usd,
     margen: '+35%',
+    recargo_usd: recargo || 0,
     precio_unit_usd: unitCeil,
-    flete_usd: flete.usd,               // null si >15kg
-    flete_estimado: !!flete.estimado,   // true si el peso venía vacío
-    flete_consultar: !!flete.consultar, // true si >15kg
     peso_kg: pesoKg,
-    // Si compra 1 unidad: precio + flete (salvo que ya supere 400)
-    final_1u_usd: (unitCeil >= 400 && (pesoKg ?? 0) <= 15)
-      ? unitCeil
-      : (flete.consultar ? null : ceil(unitCeil + flete.usd)),
     envio_gratis_desde: 400,
-    combo: {
-      unidades: unidadesGratis,
-      subtotal_usd: subtotalCombo,
-      envio: 'gratis',
-    },
   };
 }

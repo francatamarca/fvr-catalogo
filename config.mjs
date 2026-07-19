@@ -21,6 +21,21 @@ export function esReacondicionado(titulo = '') {
   return /reacondicionad|refurbish|\bcpo\b|\busado\b|semi\s?nuevo/i.test(titulo);
 }
 
+// ---- Recargos fijos POR UNIDAD (mayores gastos logísticos de ciertos productos) ----
+// Editable: agregar entradas cuando Francisco analice más productos grandes (ej: televisores).
+export const RECARGOS = [
+  { label: 'Microondas +11', usd: 11, test: (titulo, categoria) => /microond/i.test(categoria) || /microondas/i.test(titulo) },
+  { label: 'iPhone 17 +10', usd: 10, test: (titulo) => /iphone\s*17/i.test(titulo) },
+];
+export function recargoPara(titulo = '', categoria = '') {
+  let total = 0;
+  for (const r of RECARGOS) if (r.test(titulo, categoria)) total += r.usd;
+  return total;
+}
+
+// Sin ruta para bultos grandes por ahora: los productos de más de este peso NO se publican.
+export const PESO_MAX_KG = 60;
+
 // Clasificador de categoría-hoja (español + portugués) -> grupo de display. Orden = prioridad.
 const GRUPOS = [
   { nombre: 'Perfumes', emoji: '🌸', re: /perfum|fragr|eau de|colonia|body splash|desodor/i },
