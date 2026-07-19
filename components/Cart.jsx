@@ -5,10 +5,10 @@ import { useRate } from './RateContext';
 import { calcCarrito, mensajePedido, COMPRA_MINIMA } from '../lib/cart';
 
 export default function Cart() {
-  const { items, count, setQty, quitar, vaciar, abierto, setAbierto } = useCart();
+  const { items, count, setQty, quitar, vaciar, abierto, setAbierto, envios } = useCart();
   const rate = useRate();
   const [copiado, setCopiado] = useState(false);
-  const tot = calcCarrito(items);
+  const tot = calcCarrito(items, envios);
 
   const copiar = async () => {
     const msg = mensajePedido(items, tot, rate);

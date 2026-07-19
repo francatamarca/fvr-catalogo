@@ -6,7 +6,7 @@ export const useCart = () => useContext(CartContext);
 
 const KEY = 'fvr-pedido-v1';
 
-export function CartProvider({ children }) {
+export function CartProvider({ children, envios = null }) {
   const [items, setItems] = useState([]);
   const [abierto, setAbierto] = useState(false);
   const [listo, setListo] = useState(false);
@@ -24,7 +24,7 @@ export function CartProvider({ children }) {
       const i = prev.findIndex(x => x.codigo === p.codigo);
       if (i >= 0) { const n = [...prev]; n[i] = { ...n[i], qty: n[i].qty + qty }; return n; }
       const precioUnit = p.precio.via === 'fija' ? p.precio.final_usd : p.precio.precio_unit_usd;
-      return [...prev, { codigo: p.codigo, titulo: p.titulo, img: p.img, via: p.precio.via, precioUnit, pesoKg: p.pesoKg ?? null, qty }];
+      return [...prev, { codigo: p.codigo, titulo: p.titulo, img: p.img, via: p.precio.via, precioUnit, pesoKg: p.pesoKg ?? null, vol: p.vol ?? null, qty }];
     });
     setAbierto(true);
   }, []);
@@ -38,7 +38,7 @@ export function CartProvider({ children }) {
   const count = items.reduce((a, x) => a + x.qty, 0);
 
   return (
-    <CartContext.Provider value={{ items, count, agregar, setQty, quitar, vaciar, abierto, setAbierto }}>
+    <CartContext.Provider value={{ items, count, agregar, setQty, quitar, vaciar, abierto, setAbierto, envios }}>
       {children}
     </CartContext.Provider>
   );

@@ -14,6 +14,10 @@ echo [2/5] Comparando precios contra Argentina (Naldo/OnCity/Cetrogar)...
 node compare-ar.mjs >> sync-diario.log 2>&1
 if errorlevel 1 echo (comparacion AR fallo, sigo con el resto) >> sync-diario.log
 
+echo [2b/5] Cotizando envios en Via Cargo (tabla por peso)...
+node cotizar-envios.mjs >> sync-diario.log 2>&1
+if errorlevel 1 echo (cotizacion Via Cargo fallo, se usa la tabla anterior) >> sync-diario.log
+
 echo [3/5] Generando version publica (sin costo)...
 node publish.mjs >> sync-diario.log 2>&1
 if errorlevel 1 goto :error

@@ -29,16 +29,17 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  let actualizado = null;
+  let actualizado = null, envios = null;
   try {
     const c = await getCatalogo();
     if (c.generado) actualizado = new Date(c.generado).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+    envios = c.envios || null;
   } catch {}
   return (
     <html lang="es">
       <body className={jakarta.className}>
         <RateProvider>
-          <CartProvider>
+          <CartProvider envios={envios}>
           <UsdtBar />
           <header className="top">
             <div className="container top-row">

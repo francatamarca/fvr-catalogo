@@ -1,0 +1,113 @@
+{
+  "generado": "2026-07-19T07:10:01.842Z",
+  "usdt": 1573,
+  "origen": "PUERTO IGUAZU (3370)",
+  "destino": "SAN SALVADOR DE JUJUY (4607)",
+  "regla": "domicilio+5USD o sucursal+10USD, declarado 100000, pago en destino",
+  "divisor_volumetrico": 5000,
+  "sonda_volumetrica": {
+    "nota": "5kg en 60x60x60 no cotizable online (centinelas) -> Via Cargo SI factura volumen; divisor asumido 5000",
+    "dom": null,
+    "suc": null
+  },
+  "tabla": [
+    {
+      "kg": 1,
+      "ars_dom": 30000,
+      "ars_suc": 22000,
+      "usd": 25,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 2,
+      "ars_dom": 30000,
+      "ars_suc": 22000,
+      "usd": 25,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 3,
+      "ars_dom": 30000,
+      "ars_suc": 22000,
+      "usd": 25,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 5,
+      "ars_dom": 30000,
+      "ars_suc": 22000,
+      "usd": 25,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 7,
+      "ars_dom": 33000,
+      "ars_suc": 24000,
+      "usd": 26,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 10,
+      "ars_dom": 33000,
+      "ars_suc": 24000,
+      "usd": 26,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 12,
+      "ars_dom": 49000,
+      "ars_suc": 38000,
+      "usd": 37,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 15,
+      "ars_dom": 49000,
+      "ars_suc": 38000,
+      "usd": 37,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 20,
+      "ars_dom": 49000,
+      "ars_suc": 38000,
+      "usd": 37,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 25,
+      "ars_dom": null,
+      "ars_suc": 52000,
+      "usd": 44,
+      "via": "sucursal+10"
+    },
+    {
+      "kg": 30,
+      "ars_dom": null,
+      "ars_suc": 52000,
+      "usd": 44,
+      "via": "sucursal+10"
+    },
+    {
+      "kg": 40,
+      "ars_dom": null,
+      "ars_suc": 73000,
+      "usd": 57,
+      "via": "sucursal+10"
+    },
+    {
+      "kg": 50,
+      "ars_dom": 112000,
+      "ars_suc": 93000,
+      "usd": 77,
+      "via": "domicilio+5"
+    },
+    {
+      "kg": 60,
+      "ars_dom": null,
+      "ars_suc": 110000,
+      "usd": 80,
+      "via": "sucursal+10"
+    }
+  ]
+}

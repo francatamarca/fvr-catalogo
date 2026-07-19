@@ -97,6 +97,9 @@ async function main() {
         imgs: (p.imagenes_adicionales || []).map(i => i.url_optimizada || i.url_original).filter(Boolean).slice(0, 5),
         madridUSD: usd, descuento: p.precio?.descuento_porcentaje || null,
         pesoKg, stock: p.stock?.cantidad ?? null,
+        // volumen en cm³ (para peso volumétrico de Via Cargo en el carrito)
+        vol: (p.dimensiones?.altura && p.dimensiones?.ancho && p.dimensiones?.profundidad)
+          ? Math.round(p.dimensiones.altura * p.dimensiones.ancho * p.dimensiones.profundidad) : null,
         reacond: esReacondicionado(p.titulo),
         specs: (p.especificaciones_destacadas || []).map(s => ({ n: s.nombre, v: s.valor })),
         precio,

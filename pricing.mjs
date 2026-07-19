@@ -65,9 +65,9 @@ export function precioFVR(p) {
     };
   }
 
-  // VÍA A — general. Margen 35%, salvo productos de más de US$1000 que pesen menos de 5kg
+  // VÍA A — general. Margen 35%, salvo productos de más de US$1000 que pesen menos de 10kg
   // (ej: drones DJI) -> 25%. El envío se calcula en el CARRITO por peso total.
-  const margen = (usd > 1000 && pesoKg != null && pesoKg < 5) ? 1.25 : 1.35;
+  const margen = (usd > 1000 && pesoKg != null && pesoKg < 10) ? 1.25 : 1.35;
   const unitCeil = ceil(usd * margen + recargo);
 
   return {
