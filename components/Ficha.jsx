@@ -48,6 +48,12 @@ export default function Ficha({ p }) {
             {p.reacond ? <span className="tag-reacond">🔧 Reacondicionado (no es nuevo)</span> : null}
           </div>
 
+          {pv.old ? (
+            <div style={{ marginTop: 4 }}>
+              <span className="price-old" style={{ fontSize: 16 }}>US$ {Number(pv.old).toLocaleString('es-AR')}</span>
+              <span className="tag-mayor" style={{ marginLeft: 8 }}>🎉 Precio por mayor (pedido +US$1000)</span>
+            </div>
+          ) : null}
           <div className="bigprice"><span className="cur">US$ </span>{Number(pv.main).toLocaleString('es-AR')}{esGeneral ? <span style={{ fontSize: 16, color: 'var(--muted)' }}> /u</span> : null}</div>
           {rate ? <div style={{ color: 'var(--muted)', marginTop: 2, fontSize: 14 }}>{ars(pv.main, rate)} <span style={{ fontSize: 12 }}>(en pesos, al valor del USDT de hoy)</span></div> : null}
 

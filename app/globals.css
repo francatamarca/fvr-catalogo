@@ -96,6 +96,16 @@ header.top {
 }
 .hero-marks .mark b { font-size: 12px; color: var(--navy); font-weight: 800; line-height: 1.2; }
 .hero-marks .mark small { font-size: 10.5px; color: var(--muted); line-height: 1.25; }
+.hero-marks .mark.destacado { background: linear-gradient(100deg, #fff3e5, #ffe9d2); border-color: #ffca94; }
+.hero-marks .mark.destacado b { color: var(--accent-dark); }
+
+/* precio tachado + etiqueta de precio por mayor */
+.price-old { font-size: 12px; color: var(--muted); text-decoration: line-through; font-weight: 600; }
+.tag-mayor {
+  display: inline-block; text-decoration: none; background: var(--accent-soft); color: var(--accent-dark);
+  border: 1px solid #ffd9b8; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px;
+  vertical-align: 1px; letter-spacing: .2px;
+}
 .hero-visual { position: relative; display: flex; justify-content: center; align-items: center; min-height: 210px; }
 .hero-logo-card {
   width: 168px; height: 168px; background: #fff; border-radius: 30px; padding: 20px;

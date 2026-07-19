@@ -25,6 +25,7 @@ function Card({ p, rate }) {
         <div className="brand">{p.marca}</div>
         <div className="title">{p.titulo}</div>
         <div className="priceblock">
+          {pv.old ? <div className="price-old">US$ {Number(pv.old).toLocaleString('es-AR')} <span className="tag-mayor">🎉 −10% pedido +US$1000</span></div> : null}
           <div className="price">
             <span className="cur">US$</span>{Number(pv.main).toLocaleString('es-AR')}
             {pv.unit ? <span className="u"> {pv.unit}</span> : null}
@@ -93,7 +94,7 @@ export default function Tienda({ catalogo }) {
                 <span className="mark"><i>💵</i><b>Pagá en pesos</b><small>al valor del USDT del día</small></span>
                 <span className="mark"><i>📦</i><b>{catalogo.productos.length.toLocaleString('es-AR')} productos</b><small>de stock real</small></span>
                 <span className="mark"><i>🛒</i><b>Compra mínima US$250</b><small>por pedido</small></span>
-                <span className="mark"><i>🔄</i><b>Actualizado a diario</b><small>precios y stock de hoy</small></span>
+                <span className="mark destacado"><i>🎉</i><b>Pedidos +US$1000</b><small>precio por mayor: −10% en tus productos</small></span>
               </div>
             </div>
             <div className="hero-visual">
