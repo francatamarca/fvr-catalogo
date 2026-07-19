@@ -8,3 +8,6 @@ preview-*.png
 data/catalogo.json
 # Sí se publica la versión saneada (sin costo):
 !data/catalogo.public.json.gz
+
+# intermedio con costo, no publicar
+data/catalogo.json.gz
