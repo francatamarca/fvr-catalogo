@@ -88,7 +88,7 @@ async function main() {
       if (pesoKg != null && pesoKg > PESO_MAX_KG) { continue; } // sin ruta para bultos grandes por ahora
       if (esExcluidoEspecial(p.titulo || '', cat)) { continue; } // motos eléctricas etc.
       const grupo = grupoDisplay(cat, nameToTop);
-      const precio = precioFVR({ usd, categoria: cat, marca: p.marca, pesoKg, recargo: recargoPara(p.titulo || '', cat) });
+      const precio = precioFVR({ usd, categoria: cat, marca: p.marca, titulo: p.titulo || '', pesoKg, recargo: recargoPara(p.titulo || '', cat) });
       const before = prevMap.get(p.codigo);
       productos.push({
         codigo: p.codigo, titulo: p.titulo, slug: p.slug, marca: p.marca,

@@ -17,7 +17,7 @@ let conRecargo = 0;
 for (const p of c.productos) {
   const recargo = recargoPara(p.titulo || '', p.categoria || '');
   if (recargo > 0) conRecargo++;
-  p.precio = precioFVR({ usd: p.madridUSD, categoria: p.categoria, marca: p.marca, pesoKg: p.pesoKg, recargo });
+  p.precio = precioFVR({ usd: p.madridUSD, categoria: p.categoria, marca: p.marca, titulo: p.titulo || '', pesoKg: p.pesoKg, recargo });
 }
 
 // recontar categorías

@@ -4,11 +4,15 @@
 const ceil = n => Math.ceil(n);
 
 // ---- Detección de categoría con logística FIJA (por unidad, incluye envío a la ciudad) ----
-function categoriaFija(cat = '', marca = '') {
+function categoriaFija(cat = '', marca = '', titulo = '') {
   const c = cat.toLowerCase();
   if (c.includes('notebook')) return 'notebook';
   if (c.includes('tablet') || c.includes('ipad')) return 'tablet';
   if (c.includes('celular') || c.includes('smartphone')) return 'celular';
+  // SOLO consolas PS5: el título EMPIEZA con "Consola" (los accesorios dicen "Control PARA Consola...",
+  // que no empieza con esa palabra). Ojo: el título de la consola puede incluir "1 Control".
+  const t = titulo.toLowerCase();
+  if (/^\s*consola\b/.test(t) && /(playstation\s*5|\bps\s*5\b|\bps5\b)/.test(t)) return 'ps5';
   return null;
 }
 
@@ -34,6 +38,7 @@ function logisticaFija(tipo, usd, marca = '') {
     if (esApple || usd > 600) return 70; // alta gama / iPhone
     return 50;
   }
+  if (tipo === 'ps5') return 110; // consolas PlayStation 5 — provisional, Francisco reevalúa con más stock
   return null;
 }
 
@@ -43,8 +48,8 @@ function logisticaFija(tipo, usd, marca = '') {
  * @returns objeto con el precio final y metadata para mostrar / decidir si aparece.
  */
 export function precioFVR(p) {
-  const { usd, categoria = '', marca = '', pesoKg = null, recargo = 0 } = p;
-  const tipoFijo = categoriaFija(categoria, marca);
+  const { usd, categoria = '', marca = '', titulo = '', pesoKg = null, recargo = 0 } = p;
+  const tipoFijo = categoriaFija(categoria, marca, titulo);
 
   if (tipoFijo) {
     // VÍA B — precio fijo por unidad, envío incluido, SIN combos
