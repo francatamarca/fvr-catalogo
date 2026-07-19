@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.vercel/
+preview-*.png
+*.log
+
+# El catálogo COMPLETO tiene el precio de costo de Paraguay: NUNCA subir a GitHub.
+data/catalogo.json
+# Sí se publica la versión saneada (sin costo):
+!data/catalogo.public.json.gz
