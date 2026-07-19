@@ -11,3 +11,5 @@ data/catalogo.json
 
 # intermedio con costo, no publicar
 data/catalogo.json.gz
+
+.vercel

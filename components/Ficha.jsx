@@ -9,7 +9,17 @@ export default function Ficha({ p }) {
   const pv = priceView(p);
   const imgs = [p.img, ...(p.imgs || [])].filter(Boolean);
   const [main, setMain] = useState(imgs[0] || null);
+  const [copiado, setCopiado] = useState(false);
   const esGeneral = p.precio.via === 'general';
+
+  const compartir = async () => {
+    const url = window.location.href;
+    try {
+      if (navigator.share) { await navigator.share({ title: p.titulo, url }); return; }
+      await navigator.clipboard.writeText(url);
+      setCopiado(true); setTimeout(() => setCopiado(false), 2000);
+    } catch {}
+  };
 
   return (
     <div className="container">
@@ -27,7 +37,7 @@ export default function Ficha({ p }) {
         </div>
 
         <div>
-          <div className="brand" style={{ color: 'var(--muted)', fontWeight: 700, letterSpacing: '.8px', textTransform: 'uppercase', fontSize: 12 }}>{p.marca}</div>
+          <div className="catlink">{p.catEmoji} {p.catNombre} · {p.marca}</div>
           <h1>{p.titulo}</h1>
 
           <div>
@@ -36,7 +46,7 @@ export default function Ficha({ p }) {
           </div>
 
           <div className="bigprice"><span className="cur">US$ </span>{Number(pv.main).toLocaleString('es-AR')}{esGeneral ? <span style={{ fontSize: 16, color: 'var(--muted)' }}> /u</span> : null}</div>
-          {rate ? <div style={{ color: 'var(--muted)', marginTop: 2 }}>{ars(pv.main, rate)} <span style={{ fontSize: 12 }}>(al dólar cripto de hoy)</span></div> : null}
+          {rate ? <div style={{ color: 'var(--muted)', marginTop: 2, fontSize: 14 }}>{ars(pv.main, rate)} <span style={{ fontSize: 12 }}>(al dólar cripto de hoy)</span></div> : null}
 
           <div className="card-info">
             {(() => {
@@ -57,8 +67,11 @@ export default function Ficha({ p }) {
             ) : null}
             <div className="row"><span className="k">Disponibilidad</span><span className="v" style={{ color: 'var(--green)' }}>En stock ✓</span></div>
             {p.pesoKg ? <div className="row"><span className="k">Peso</span><span className="v">{p.pesoKg} kg</span></div> : null}
-            <div className="row"><span className="k">Categoría</span><span className="v">{p.catNombre}</span></div>
           </div>
+
+          <button className="share" onClick={compartir}>
+            {copiado ? '✓ Link copiado' : '🔗 Compartir este producto'}
+          </button>
 
           {p.specs?.length > 0 && (
             <div className="specs">
