@@ -48,7 +48,13 @@ function logisticaFija(tipo, usd, marca = '') {
  * @returns objeto con el precio final y metadata para mostrar / decidir si aparece.
  */
 export function precioFVR(p) {
-  const { usd, categoria = '', marca = '', titulo = '', pesoKg = null, recargo = 0 } = p;
+  // ojo: los defaults de destructuring no cubren null (solo undefined) -> normalizar a mano
+  const usd = p.usd;
+  const categoria = p.categoria || '';
+  const marca = p.marca || '';
+  const titulo = p.titulo || '';
+  const pesoKg = p.pesoKg ?? null;
+  const recargo = p.recargo || 0;
   const tipoFijo = categoriaFija(categoria, marca, titulo);
 
   if (tipoFijo) {

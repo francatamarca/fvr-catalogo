@@ -73,6 +73,7 @@ export default function Tienda({ catalogo }) {
   const buscando = tokens.length > 0;
   const enHome = !buscando && cat === 'all' && pMin === '' && pMax === '';
   const ofertas = enHome ? catalogo.productos.filter(p => p.descuento) : [];
+  const novedades = enHome ? catalogo.productos.filter(p => p.esNuevo) : [];
 
   const irACategoria = (slug) => {
     setCat(slug);
@@ -134,10 +135,20 @@ export default function Tienda({ catalogo }) {
           </>
         )}
 
+        {novedades.length > 0 && (
+          <>
+            <div className="section-title">✨ Novedades de la semana</div>
+            <div className="section-sub">Productos que acaban de entrar en stock, detectados automáticamente.</div>
+            <div className="grid">
+              {novedades.slice(0, 10).map(p => <Card key={p.codigo} p={p} rate={rate} />)}
+            </div>
+          </>
+        )}
+
         {ofertas.length > 0 && (
           <>
-            <div className="section-title">🔥 Ofertas del día</div>
-            <div className="section-sub">Con descuento real del proveedor, ya con tu precio final calculado.</div>
+            <div className="section-title">🔥 Ofertas de la semana</div>
+            <div className="section-sub">Los descuentos vigentes del proveedor, ya con tu precio final calculado.</div>
             <div className="grid">
               {ofertas.slice(0, 10).map(p => <Card key={p.codigo} p={p} rate={rate} />)}
             </div>

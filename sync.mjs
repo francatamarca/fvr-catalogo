@@ -1,7 +1,7 @@
 // Sync worker FVR — recorre TODO Madrid Center (menos comestibles), aplica precios/filtros
 // y genera data/catalogo.json. Uso: node sync.mjs [--full]  (--full = sin tope)
 import puppeteer from 'puppeteer-core';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { precioFVR } from './pricing.mjs';
 import {
@@ -21,6 +21,9 @@ async function main() {
   if (existsSync(DATA)) { try { prev = JSON.parse(await readFile(DATA, 'utf8')); } catch {} }
   const prevMap = new Map(prev.productos.map(p => [p.codigo, p]));
   const hayPrev = prev.productos.length > 0;
+  const hoy = new Date().toISOString().slice(0, 10);
+  const DIAS_NOVEDAD = 7;
+  const esReciente = (fecha) => fecha && (Date.now() - new Date(fecha).getTime()) <= DIAS_NOVEDAD * 86400000;
 
   const browser = await puppeteer.launch({
     executablePath: CHROME_PATH, headless: 'new',
@@ -32,14 +35,14 @@ async function main() {
   await page.goto(MC_HOME, { waitUntil: 'domcontentloaded', timeout: 60000 });
 
   const apiGet = async (url) => {
-    for (let i = 0; i < 24; i++) {
+    for (let i = 0; i < 30; i++) {
       const res = await page.evaluate(async u => {
         try { const r = await fetch(u, { headers: { accept: 'application/json' } });
           const t = await r.text(); return { s: r.status, j: t.trim().startsWith('{'), t }; }
         catch { return { s: -1 }; }
       }, url);
       if (res.s === 200 && res.j) return JSON.parse(res.t);
-      if (res.s === 429) { await sleep(Math.min(8000 + i * 2000, 30000)); continue; } // rate-limit: backoff, sin re-navegar
+      if (res.s === 429) { await sleep(Math.min(15000 + i * 5000, 60000)); continue; } // rate-limit: backoff paciente (hasta ~20 min en total)
       if (i === 6 || i === 13) { // 403/challenge: re-navegar a la home
         try { await page.goto(MC_HOME, { waitUntil: 'domcontentloaded', timeout: 60000 }); } catch {}
       }
@@ -67,9 +70,20 @@ async function main() {
   const totalCatalogo = treeES.estadisticas?.total_productos;
   console.log(`   catálogo Madrid Center: ${totalCatalogo} productos · ${Object.keys(nameToTop).length} nombres de categoría mapeados`);
 
-  // 2) pasada global por cursor
+  // 2) pasada global por cursor (RESUMIBLE: si un run anterior falló, retoma desde el checkpoint)
+  const PARTIAL = './data/sync-partial.json';
   const productos = [];
   let cursor = null, vistos = 0, pagina = 0, ocultosPorPiso = 0, excluidos = 0;
+  if (existsSync(PARTIAL)) {
+    try {
+      const pt = JSON.parse(await readFile(PARTIAL, 'utf8'));
+      if (Date.now() - pt.ts < 3 * 3600e3 && pt.cursor) {
+        cursor = pt.cursor; vistos = pt.vistos; ocultosPorPiso = pt.ocultosPorPiso; excluidos = pt.excluidos;
+        productos.push(...pt.productos);
+        console.log(`   reanudando desde el checkpoint (${productos.length} productos ya traídos, cursor ${cursor})`);
+      }
+    } catch {}
+  }
   process.stdout.write('   trayendo');
   while (vistos < CAP) {
     const url = `${MC_API}?country=py&idioma=es&limit=100&orden=relevance&formato_completo=true&solo_con_stock=true${cursor ? `&cursor=${cursor}` : ''}`;
@@ -103,7 +117,9 @@ async function main() {
         reacond: esReacondicionado(p.titulo),
         specs: (p.especificaciones_destacadas || []).map(s => ({ n: s.nombre, v: s.valor })),
         precio,
-        esNuevo: hayPrev && !before,
+        // fecha en que apareció por primera vez -> "Novedades" durante 7 días (persistente entre syncs)
+        nuevoDesde: before?.nuevoDesde || (before ? null : (hayPrev ? hoy : null)),
+        esNuevo: esReciente(before?.nuevoDesde || (before ? null : (hayPrev ? hoy : null))),
         repuesto: !!(before && (before.stock === 0 || before.stock == null) && (p.stock?.cantidad > 0)),
       });
     }
@@ -113,8 +129,13 @@ async function main() {
     else process.stdout.write('.');
     if (!data.paginacion?.tiene_mas || !cursor) break;
     if (pagina > 300) break;
+    // checkpoint cada 10 páginas: si el run muere (rate-limit, corte), el próximo retoma acá
+    if (pagina % 10 === 0) {
+      await writeFile(PARTIAL, JSON.stringify({ ts: Date.now(), cursor, vistos, ocultosPorPiso, excluidos, productos }));
+    }
     await sleep(500); // pausa suave entre páginas para no gatillar el rate-limit de Cloudflare
   }
+  try { await unlink(PARTIAL); } catch {} // pasada completa: limpiar checkpoint
 
   const codigosAhora = new Set(productos.map(p => p.codigo));
   const sinStock = prev.productos.filter(p => !codigosAhora.has(p.codigo)).map(p => p.codigo);
