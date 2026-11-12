@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { useCart } from './CartContext';
 import { useRate } from './RateContext';
-import { calcCarrito, mensajePedido, COMPRA_MINIMA } from '../lib/cart';
+import { calcCarrito, mensajePedido, linkPedidoWhatsApp, COMPRA_MINIMA } from '../lib/cart';
 
 export default function Cart() {
   const { items, count, setQty, quitar, vaciar, abierto, setAbierto, envios } = useCart();
@@ -17,19 +17,14 @@ export default function Cart() {
       setCopiado(true); setTimeout(() => setCopiado(false), 2600);
     } catch {}
   };
-  const compartir = async () => {
-    const msg = mensajePedido(items, tot, rate);
-    try {
-      if (navigator.share) await navigator.share({ text: msg });
-      else await copiar();
-    } catch {}
-  };
-
   return (
     <>
       <button className="cart-fab" onClick={() => setAbierto(true)} aria-label="Ver mi pedido">
         🛒{count > 0 && <span className="cart-count">{count}</span>}
       </button>
+      <a className="whatsapp-fab" href="https://wa.me/543883372745" target="_blank" rel="noreferrer" aria-label="Contactar a FVR por WhatsApp">
+        <span aria-hidden="true">◉</span><span>Contactar FVR</span>
+      </a>
 
       {abierto && (
         <div className="cart-overlay" onClick={() => setAbierto(false)}>
@@ -108,7 +103,7 @@ export default function Cart() {
                   <button className="btn-copy" disabled={!tot.minimoOk} onClick={copiar}>
                     {copiado ? '✓ ¡Pedido copiado!' : '📋 Copiar pedido'}
                   </button>
-                  <button className="btn-share" disabled={!tot.minimoOk} onClick={compartir}>📤 Compartir</button>
+                  <a className={`btn-share ${!tot.minimoOk ? 'disabled' : ''}`} href={tot.minimoOk ? linkPedidoWhatsApp(items, tot, rate) : undefined} target="_blank" rel="noreferrer" aria-disabled={!tot.minimoOk}>💬 Enviar por WhatsApp</a>
                 </div>
                 <button className="cart-clear" onClick={vaciar}>Vaciar pedido</button>
               </>

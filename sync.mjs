@@ -1,11 +1,11 @@
 // Sync worker FVR — recorre TODO Madrid Center (menos comestibles), aplica precios/filtros
 // y genera data/catalogo.json. Uso: node sync.mjs [--full]  (--full = sin tope)
-import puppeteer from 'puppeteer-core';
-import { readFile, writeFile, mkdir, unlink } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
+import { gunzipSync } from 'node:zlib';
 import { precioFVR } from './pricing.mjs';
 import {
-  MC_API, MC_HOME, CHROME_PATH, UA, CATEGORIAS_EXCLUIDAS,
+  MC_API, CATEGORIAS_EXCLUIDAS,
   pasaFiltroArgentina, esReacondicionado, grupoDisplay, slugify,
   recargoPara, PESO_MAX_KG, esExcluidoEspecial,
 } from './config.mjs';
@@ -15,41 +15,49 @@ const CAP = FULL ? Infinity : 1200;
 const DATA = './data/catalogo.json';
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const excluida = c => CATEGORIAS_EXCLUIDAS.some(x => (c || '').toLowerCase().includes(x));
+const STATUS = './data/sync-status.json';
+
+async function readPrevious() {
+  if (existsSync(DATA)) {
+    try { return JSON.parse(await readFile(DATA, 'utf8')); } catch {}
+  }
+  // Runner cloud fresh checkout: use the last sanitized release for novelty/stock continuity.
+  try { return JSON.parse(gunzipSync(await readFile('./data/catalogo.public.json.gz')).toString('utf8')); }
+  catch { return { productos: [] }; }
+}
+
+async function apiGet(url) {
+  for (let intento = 0; intento < 5; intento++) {
+    let res;
+    try { res = await fetch(url, { headers: { accept: 'application/json' }, signal: AbortSignal.timeout(30000) }); }
+    catch (e) {
+      if (intento === 4) throw new Error(`No se pudo consultar la API pública de Madrid Center: ${e.message}`);
+      await sleep(1500 * (intento + 1));
+      continue;
+    }
+    if (res.status === 429 || res.status >= 500) {
+      if (intento < 4) { await sleep(Math.min(5000 * (intento + 1), 20000)); continue; }
+    }
+    if (res.status === 403 || res.status === 503) {
+      throw new Error(`Madrid Center respondió HTTP ${res.status}. La automatización no está habilitada por el proveedor; no se intentará resolver ni eludir su control de acceso.`);
+    }
+    if (!res.ok) throw new Error(`API Madrid Center respondió HTTP ${res.status}.`);
+    const type = res.headers.get('content-type') || '';
+    if (!type.includes('json')) throw new Error(`La API respondió contenido no JSON (${type || 'tipo desconocido'}); puede ser un desafío o una respuesta no válida.`);
+    return res.json();
+  }
+  throw new Error('Madrid Center no respondió tras 5 intentos; se conserva la publicación anterior.');
+}
 
 async function main() {
-  let prev = { productos: [] };
-  if (existsSync(DATA)) { try { prev = JSON.parse(await readFile(DATA, 'utf8')); } catch {} }
+  let prev = await readPrevious();
   const prevMap = new Map(prev.productos.map(p => [p.codigo, p]));
   const hayPrev = prev.productos.length > 0;
   const hoy = new Date().toISOString().slice(0, 10);
   const DIAS_NOVEDAD = 7;
   const esReciente = (fecha) => fecha && (Date.now() - new Date(fecha).getTime()) <= DIAS_NOVEDAD * 86400000;
 
-  const browser = await puppeteer.launch({
-    executablePath: CHROME_PATH, headless: 'new',
-    args: ['--no-sandbox', '--disable-blink-features=AutomationControlled'],
-  });
-  const page = await browser.newPage();
-  await page.setUserAgent(UA);
-  console.log('→ pasando Cloudflare...');
-  await page.goto(MC_HOME, { waitUntil: 'domcontentloaded', timeout: 60000 });
-
-  const apiGet = async (url) => {
-    for (let i = 0; i < 30; i++) {
-      const res = await page.evaluate(async u => {
-        try { const r = await fetch(u, { headers: { accept: 'application/json' } });
-          const t = await r.text(); return { s: r.status, j: t.trim().startsWith('{'), t }; }
-        catch { return { s: -1 }; }
-      }, url);
-      if (res.s === 200 && res.j) return JSON.parse(res.t);
-      if (res.s === 429) { await sleep(Math.min(15000 + i * 5000, 60000)); continue; } // rate-limit: backoff paciente (hasta ~20 min en total)
-      if (i === 6 || i === 13) { // 403/challenge: re-navegar a la home
-        try { await page.goto(MC_HOME, { waitUntil: 'domcontentloaded', timeout: 60000 }); } catch {}
-      }
-      await sleep(2500);
-    }
-    throw new Error('Madrid Center no respondió (posible rate-limit): ' + url);
-  };
+  console.log('→ consultando la API pública de Madrid Center con acceso HTTP estándar...');
 
   // 1) árbol de categorías en ES y PT -> emparejar por id -> mapa nombre(cualquier idioma)->categoría top ES
   const treeES = await apiGet(`${MC_API}?country=py&idioma=es&limit=1`);
@@ -68,23 +76,14 @@ async function main() {
   };
   registrar(treeES); registrar(treePT);
   const totalCatalogo = treeES.estadisticas?.total_productos;
+  if (!Number.isFinite(totalCatalogo) || totalCatalogo < 1) throw new Error('El proveedor no informó un total válido de productos; publicación cancelada.');
   console.log(`   catálogo Madrid Center: ${totalCatalogo} productos · ${Object.keys(nameToTop).length} nombres de categoría mapeados`);
 
-  // 2) pasada global por cursor (RESUMIBLE: si un run anterior falló, retoma desde el checkpoint)
-  const PARTIAL = './data/sync-partial.json';
+  // 2) pasada global por cursor. Se arma en memoria y sólo se reemplaza el archivo al finalizar.
   const productos = [];
   let cursor = null, vistos = 0, pagina = 0, ocultosPorPiso = 0, excluidos = 0;
-  if (existsSync(PARTIAL)) {
-    try {
-      const pt = JSON.parse(await readFile(PARTIAL, 'utf8'));
-      if (Date.now() - pt.ts < 3 * 3600e3 && pt.cursor) {
-        cursor = pt.cursor; vistos = pt.vistos; ocultosPorPiso = pt.ocultosPorPiso; excluidos = pt.excluidos;
-        productos.push(...pt.productos);
-        console.log(`   reanudando desde el checkpoint (${productos.length} productos ya traídos, cursor ${cursor})`);
-      }
-    } catch {}
-  }
   process.stdout.write('   trayendo');
+  let completo = false;
   while (vistos < CAP) {
     const url = `${MC_API}?country=py&idioma=es&limit=100&orden=relevance&formato_completo=true&solo_con_stock=true${cursor ? `&cursor=${cursor}` : ''}`;
     const data = await apiGet(url);
@@ -127,19 +126,19 @@ async function main() {
     pagina++;
     if (pagina % 5 === 0) process.stdout.write(` ${productos.length}`);
     else process.stdout.write('.');
-    if (!data.paginacion?.tiene_mas || !cursor) break;
-    if (pagina > 300) break;
-    // checkpoint cada 10 páginas: si el run muere (rate-limit, corte), el próximo retoma acá
-    if (pagina % 10 === 0) {
-      await writeFile(PARTIAL, JSON.stringify({ ts: Date.now(), cursor, vistos, ocultosPorPiso, excluidos, productos }));
-    }
-    await sleep(500); // pausa suave entre páginas para no gatillar el rate-limit de Cloudflare
+    if (!data.paginacion?.tiene_mas) { completo = true; break; }
+    if (!cursor) throw new Error('El proveedor indicó que hay más páginas pero no entregó cursor; publicación cancelada.');
+    if (pagina >= 300) throw new Error('Se alcanzó el límite de seguridad de 300 páginas antes de completar el catálogo.');
+    await sleep(500); // pausa suave para no saturar la API pública
   }
-  try { await unlink(PARTIAL); } catch {} // pasada completa: limpiar checkpoint
+  if (!completo && FULL) throw new Error(`Recorrido incompleto: ${vistos} de ${totalCatalogo} productos leídos. Se conserva la publicación anterior.`);
+  if (FULL && vistos !== totalCatalogo) throw new Error(`Control de integridad falló: Madrid Center informa ${totalCatalogo} productos y se leyeron ${vistos}. No se publicará una baja masiva.`);
+  if (!FULL && productos.length < Math.max(100, Math.floor(prev.productos.length * 0.7))) throw new Error('El catálogo parcial quedó por debajo del umbral de seguridad; no se publica.');
+  if (new Set(productos.map(p => String(p.codigo))).size !== productos.length) throw new Error('El proveedor devolvió códigos duplicados; publicación cancelada.');
 
   const codigosAhora = new Set(productos.map(p => p.codigo));
   const sinStock = prev.productos.filter(p => !codigosAhora.has(p.codigo)).map(p => p.codigo);
-  await browser.close();
+  if (!productos.length || productos.length < Math.max(100, Math.floor(prev.productos.length * 0.7))) throw new Error('La respuesta produciría un catálogo vacío o incompleto; publicación cancelada.');
 
   // categorías de display con conteo, ordenadas por cantidad
   const catMap = new Map();
@@ -163,10 +162,17 @@ async function main() {
     },
     productos,
   };
-  await writeFile(DATA, JSON.stringify(out));
+  const tmp = `${DATA}.tmp`;
+  await writeFile(tmp, JSON.stringify(out));
+  await rename(tmp, DATA);
+  await writeFile(STATUS, JSON.stringify({ ok: true, generado: out.generado, productosFuente: vistos, productosPublicados: productos.length, categorias: categorias.length, resumen: out.resumen }, null, 2));
   console.log(`\n\n✅ Catálogo: ${out.total} productos en ${categorias.length} categorías`);
   console.log('   ' + categorias.slice(0, 12).map(c => `${c.emoji}${c.nombre}:${c.cantidad}`).join('  '));
   console.log('   Diff:', JSON.stringify(out.resumen));
 }
 
-main().catch(e => { console.error('ERROR:', e.message); process.exit(1); });
+main().catch(async e => {
+  console.error('ERROR:', e.message);
+  try { await writeFile(STATUS, JSON.stringify({ ok: false, fallido: new Date().toISOString(), error: e.message }, null, 2)); } catch {}
+  process.exit(1);
+});

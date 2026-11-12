@@ -45,6 +45,8 @@ header.top {
   position: sticky; top: 0; z-index: 50; box-shadow: var(--shadow-sm);
 }
 .top-row { display: flex; align-items: center; gap: 22px; padding: 12px 0; }
+.contact-top { margin-left: auto; display: inline-flex; align-items: center; gap: 7px; padding: 10px 15px; color: #fff; background: #148b50; border-radius: 999px; font-size: 13px; font-weight: 800; box-shadow: 0 4px 14px rgba(20,139,80,.18); }
+.contact-top:hover, .whatsapp-fab:hover { background: #0b7440; }
 .logo { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .logo-tile { width: 46px; height: 46px; border-radius: 13px; background: #fff; border: 1px solid var(--line); box-shadow: var(--shadow-sm); display: grid; place-items: center; padding: 4px; }
 .logo-img { width: 100%; height: 100%; border-radius: 9px; object-fit: contain; }
@@ -210,6 +212,7 @@ footer .fl { display: flex; justify-content: space-between; flex-wrap: wrap; gap
 footer .fn { color: #fff; font-weight: 800; font-size: 16px; letter-spacing: -.2px; }
 footer .fs { margin-top: 5px; }
 footer .fupd { font-size: 12px; opacity: .75; }
+.footer-whatsapp { display: inline-block; margin-top: 8px; color: #fff; font-weight: 700; }
 
 /* ---------- Ficha de producto ---------- */
 .back { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-weight: 700; font-size: 13.5px; margin: 18px 0 0; padding: 8px 14px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; transition: .13s; }
@@ -333,12 +336,17 @@ footer .fupd { font-size: 12px; opacity: .75; }
   flex: 1.4; padding: 13px 0; border: none; border-radius: 999px; font-weight: 800; font-size: 14.5px; cursor: pointer;
   background: linear-gradient(100deg, var(--accent) 0%, #ff9b3f 100%); color: #fff; box-shadow: 0 6px 18px rgba(255,122,26,.3);
 }
-.btn-share { flex: 1; padding: 13px 0; border: 1.5px solid var(--line); border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; background: #fff; color: var(--navy); }
-.btn-copy:disabled, .btn-share:disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+.btn-share { flex: 1; display: flex; justify-content: center; align-items: center; padding: 13px 8px; border: 1.5px solid #148b50; border-radius: 999px; font-weight: 700; font-size: 14px; cursor: pointer; background: #148b50; color: #fff; }
+.btn-copy:disabled, .btn-share.disabled { opacity: .45; cursor: not-allowed; box-shadow: none; pointer-events: none; }
+.whatsapp-fab { position: fixed; left: 22px; bottom: 22px; z-index: 70; display: flex; align-items: center; gap: 8px; padding: 13px 18px; border-radius: 999px; color: #fff; background: #148b50; box-shadow: 0 6px 22px rgba(9,58,35,.28); font-size: 13px; font-weight: 800; }
+.whatsapp-fab span:first-child { font-size: 18px; line-height: 1; }
 .cart-clear { border: none; background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer; padding: 8px 0 14px; }
 
 /* ---------- Mobile ---------- */
 @media (max-width: 720px) {
+  .contact-top { padding: 10px 12px; font-size: 12px; }
+  .whatsapp-fab { left: 14px; bottom: 14px; padding: 13px 14px; }
+  .whatsapp-fab span:last-child { display: none; }
   .top-row { flex-wrap: wrap; gap: 10px; padding: 10px 0; }
   .search { order: 3; flex-basis: 100%; max-width: none; }
   .hero { padding: 22px 0 24px; }

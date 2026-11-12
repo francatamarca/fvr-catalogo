@@ -1,10 +1,12 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // asegura que data/catalogo.json viaje al deploy (lo leemos con fs en runtime)
-  outputFileTracingIncludes: {
-    '/': ['./data/**'],
-    '/producto/[codigo]': ['./data/**'],
+  // asegura que el catálogo saneado local esté disponible como respaldo en runtime
+  experimental: {
+    outputFileTracingIncludes: {
+      '/': ['./data/catalogo.public.json.gz'],
+      '/producto/[codigo]': ['./data/catalogo.public.json.gz'],
+    },
   },
 };
 export default nextConfig;

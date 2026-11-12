@@ -1,0 +1,50 @@
+name: Actualizar catálogo FVR
+
+on:
+  schedule:
+    - cron: '0 14 * * *'
+      timezone: America/Argentina/Buenos_Aires
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: actualizacion-catalogo
+  cancel-in-progress: false
+
+jobs:
+  actualizar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Descargar repositorio
+        uses: actions/checkout@v4
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Sincronizar catálogo completo
+        run: node sync.mjs --full
+      - name: Crear catálogo público saneado
+        run: node publish.mjs
+      - name: Publicar sólo si cambió el catálogo público
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/catalogo.public.json.gz
+          if git diff --cached --quiet; then
+            echo "El catálogo público no tuvo cambios." >> "$GITHUB_STEP_SUMMARY"
+          else
+            git commit -m "actualizacion diaria del catalogo"
+            git push
+            echo "Catálogo completo, validado y publicado. Vercel recibe el cambio desde GitHub." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Resumen de sincronización
+        if: always()
+        shell: bash
+        run: |
+          if [ -f data/sync-status.json ]; then
+            node --input-type=module -e 'import fs from "node:fs"; const s=JSON.parse(fs.readFileSync("data/sync-status.json")); if(s.ok) console.log(`Éxito: ${s.productosFuente} revisados; ${s.productosPublicados} en el catálogo; ${s.categorias} categorías.`); else { console.error(`Falló: ${s.error}`); process.exitCode=1; }' >> "$GITHUB_STEP_SUMMARY"
+          fi

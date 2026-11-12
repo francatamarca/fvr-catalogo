@@ -1,10 +1,13 @@
 // Genera data/catalogo.public.json.gz (saneado: SIN el precio de costo de Paraguay) para hostear.
 // Excluye los productos marcados ocultoAR (pierden contra el precio argentino, ver compare-ar.mjs).
-import { readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, statSync, existsSync, renameSync, unlinkSync } from 'node:fs';
 import { gzipSync } from 'node:zlib';
 import { clientProduct } from './lib/catalogo.js';
 
 const c = JSON.parse(readFileSync('data/catalogo.json', 'utf8'));
+if (!c.generado || !Number.isFinite(Date.parse(c.generado)) || !Array.isArray(c.productos) || c.productos.length < 100 || !Array.isArray(c.categorias) || !c.categorias.length) {
+  throw new Error('Catálogo vacío o inválido; se conserva la versión pública anterior.');
+}
 // tabla de envíos Via Cargo (cotizada automáticamente) — viaja junto al catálogo
 let envios = null;
 if (existsSync('data/envios.json')) {
@@ -28,9 +31,14 @@ const pub = {
   envios,
   productos: visibles.map(p => clientProduct(p, true)),
 };
-writeFileSync('data/catalogo.public.json.gz', gzipSync(Buffer.from(JSON.stringify(pub))));
-const kb = (statSync('data/catalogo.public.json.gz').size / 1024).toFixed(0);
 const s = JSON.stringify(pub);
-const leak = s.includes('base_usd') || s.includes('madridUSD') || s.includes('"ar":');
+const leak = /"(?:base_usd|madridUSD|ocultoAR|stock|ar)"\s*:/.test(s);
+if (leak) throw new Error('Se detectaron campos internos en el archivo público.');
+if (!pub.productos.length || pub.productos.length < Math.min(100, c.productos.length)) throw new Error('El catálogo saneado quedó vacío/incompleto; publicación cancelada.');
+const tmp = 'data/catalogo.public.json.gz.tmp';
+try { unlinkSync(tmp); } catch {}
+writeFileSync(tmp, gzipSync(Buffer.from(JSON.stringify(pub))));
+renameSync(tmp, 'data/catalogo.public.json.gz');
+const kb = (statSync('data/catalogo.public.json.gz').size / 1024).toFixed(0);
 console.log(`✅ catalogo.public.json.gz — ${pub.productos.length} visibles (${ocultosAR} ocultos por precio AR) — ${kb} KB`);
-console.log(leak ? '⚠️  ATENCIÓN: quedó info interna en el público' : '🔒 OK: sin costo ni datos internos en el archivo público');
+console.log('🔒 OK: sin costo ni inventario interno en el archivo público');

@@ -32,7 +32,7 @@ export default async function RootLayout({ children }) {
   let actualizado = null, envios = null;
   try {
     const c = await getCatalogo();
-    if (c.generado) actualizado = new Date(c.generado).toLocaleDateString('es-AR', { day: 'numeric', month: 'long' });
+    if (c.generado) actualizado = new Date(c.generado).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
     envios = c.envios || null;
   } catch {}
   return (
@@ -44,6 +44,7 @@ export default async function RootLayout({ children }) {
           <header className="top">
             <div className="container top-row">
               <Logo />
+              <a className="contact-top" href="https://wa.me/543883372745" target="_blank" rel="noreferrer">💬 <span>WhatsApp FVR</span></a>
             </div>
           </header>
           {children}
@@ -57,6 +58,7 @@ export default async function RootLayout({ children }) {
               <div style={{ textAlign: 'right' }}>
                 <div style={{ opacity: .8 }}>Catálogo de referencia · Los precios pueden variar según cotización y stock.</div>
                 {actualizado ? <div className="fupd">Stock y precios actualizados: {actualizado}</div> : null}
+                <a className="footer-whatsapp" href="https://wa.me/543883372745" target="_blank" rel="noreferrer">Contactar a FVR por WhatsApp →</a>
               </div>
             </div>
           </footer>
