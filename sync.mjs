@@ -17,6 +17,22 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 const excluida = c => CATEGORIAS_EXCLUIDAS.some(x => (c || '').toLowerCase().includes(x));
 const STATUS = './data/sync-status.json';
 
+// Mismos parámetros públicos que utiliza la web actual de Madrid Center (API v4).
+// El filtro de stock coincide en estadísticas y páginas para validar el total correcto.
+function searchURL(params = {}) {
+  const url = new URL(MC_API);
+  url.search = new URLSearchParams({ idioma: 'es', limit: '100', orden: 'relevance',
+    formato_simple: 'false', formato_completo: 'true', solo_con_stock: 'true',
+    incluir_estadisticas: 'true', ...params }).toString();
+  return url.href;
+}
+
+function categoriasDe(tree) {
+  const raw = tree.estadisticas?.categorias_disponibles || tree.estadisticas?.categorias || [];
+  return Array.isArray(raw) ? raw : Object.entries(raw).map(([id, value]) =>
+    typeof value === 'object' && value !== null ? { id, ...value } : { id, nombre: id });
+}
+
 async function readPrevious() {
   if (existsSync(DATA)) {
     try { return JSON.parse(await readFile(DATA, 'utf8')); } catch {}
@@ -38,8 +54,8 @@ async function apiGet(url) {
     if (res.status === 429 || res.status >= 500) {
       if (intento < 4) { await sleep(Math.min(5000 * (intento + 1), 20000)); continue; }
     }
-    if (res.status === 403 || res.status === 503) {
-      throw new Error(`Madrid Center respondió HTTP ${res.status}. La automatización no está habilitada por el proveedor; no se intentará resolver ni eludir su control de acceso.`);
+    if (res.status === 403) {
+      throw new Error('La API v4 de Madrid Center rechazó esta consulta HTTP (403). Se conserva el catálogo anterior. Este código por sí solo no demuestra que haga falta una clave de API o un permiso nuevo.');
     }
     if (!res.ok) throw new Error(`API Madrid Center respondió HTTP ${res.status}.`);
     const type = res.headers.get('content-type') || '';
@@ -60,22 +76,22 @@ async function main() {
   console.log('→ consultando la API pública de Madrid Center con acceso HTTP estándar...');
 
   // 1) árbol de categorías en ES y PT -> emparejar por id -> mapa nombre(cualquier idioma)->categoría top ES
-  const treeES = await apiGet(`${MC_API}?country=py&idioma=es&limit=1`);
-  const treePT = await apiGet(`${MC_API}?country=py&idioma=pt&limit=1`);
+  const treeES = await apiGet(searchURL({ idioma: 'es', limit: '1' }));
+  const treePT = await apiGet(searchURL({ idioma: 'pt', limit: '1' }));
   const idToTopES = {};
-  for (const top of (treeES.estadisticas?.categorias_disponibles || [])) {
+  for (const top of categoriasDe(treeES)) {
     idToTopES[top.id] = top.nombre;
     for (const sub of (top.subcategorias || [])) idToTopES[sub.id] = top.nombre;
   }
   const nameToTop = {};
   const registrar = (tree) => {
-    for (const top of (tree.estadisticas?.categorias_disponibles || [])) {
+    for (const top of categoriasDe(tree)) {
       if (idToTopES[top.id]) nameToTop[top.nombre] = idToTopES[top.id];
       for (const sub of (top.subcategorias || [])) if (idToTopES[sub.id]) nameToTop[sub.nombre] = idToTopES[sub.id];
     }
   };
   registrar(treeES); registrar(treePT);
-  const totalCatalogo = treeES.estadisticas?.total_productos;
+  const totalCatalogo = Number(treeES.estadisticas?.total_productos ?? treeES.estadisticas?.total ?? treeES.estadisticas?.count);
   if (!Number.isFinite(totalCatalogo) || totalCatalogo < 1) throw new Error('El proveedor no informó un total válido de productos; publicación cancelada.');
   console.log(`   catálogo Madrid Center: ${totalCatalogo} productos · ${Object.keys(nameToTop).length} nombres de categoría mapeados`);
 
@@ -85,7 +101,7 @@ async function main() {
   process.stdout.write('   trayendo');
   let completo = false;
   while (vistos < CAP) {
-    const url = `${MC_API}?country=py&idioma=es&limit=100&orden=relevance&formato_completo=true&solo_con_stock=true${cursor ? `&cursor=${cursor}` : ''}`;
+    const url = searchURL(cursor ? { cursor: String(cursor) } : {});
     const data = await apiGet(url);
     const lote = data.productos || [];
     if (!lote.length) break;

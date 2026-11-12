@@ -78,7 +78,7 @@ export const slugify = s => (s || '').toLowerCase().normalize('NFD').replace(/[Ì
   .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
 // API Madrid Center
-export const MC_API = 'https://madridcenterimportados.com/bff/main/api/v3/productos/buscar';
+export const MC_API = 'https://madridcenterimportados.com/bff/main/api/v4/productos/buscar';
 export const MC_HOME = 'https://madridcenterimportados.com/home';
 export const CHROME_PATH = 'C:\\Program Files (x86)\\Google\\Chrome\\Application\\chrome.exe';
 export const UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36';
