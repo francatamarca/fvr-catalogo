@@ -7,6 +7,7 @@ import { priceView, ars } from '../lib/format';
 import CampaignSlider from './CampaignSlider';
 import {BrandGallery,CategoryGallery} from './HomeSections';
 import {useFavorites,FavoriteButton} from './FavoritesContext';
+import {COMPRA_MINIMA} from '../lib/cart';
 
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const precioDe=p=>p.precio.via==='fija'?p.precio.final_usd:p.precio.precio_unit_usd;
@@ -20,7 +21,7 @@ function Card({p,rate}) {
       {p.repuesto?<span className="badge repuesto">Repuesto</span>:p.esNuevo?<span className="badge new">Nuevo</span>:null}
     </div><Link href={`/producto/${p.codigo}`} aria-label={`Ver ${p.titulo}`}>{p.img?<img src={p.img} alt={p.titulo} loading="lazy"/>:<span className="no-image">Sin imagen</span>}</Link><FavoriteButton code={p.codigo} title={p.titulo}/></div>
     <div className="body"><div className="brand">{p.marca}</div><Link href={`/producto/${p.codigo}`} className="title">{p.titulo}</Link>
-      <div className="priceblock">{pv.old?<div className="price-old">US$ {Number(pv.old).toLocaleString('es-AR')} <span className="tag-mayor">−10% pedido +US$1000</span></div>:null}
+      <div className="priceblock">{pv.old?<div className="price-old">US$ {Number(pv.old).toLocaleString('es-AR')} <span className="tag-mayor">Precio por mayor desde US$1.000</span></div>:null}
         <div className="price"><span className="cur">US$</span>{Number(pv.main).toLocaleString('es-AR')}{pv.unit?<span className="u"> {pv.unit}</span>:null}</div>
         {rate?<div className="price-ars">{ars(pv.main,rate)}</div>:null}<div className={`ship-note ${pv.noteClass}`}>{pv.note}</div>
         <button className="btn-add" onClick={e=>{e.preventDefault();e.stopPropagation();agregar(p,1);}}>+ Agregar</button>
@@ -34,9 +35,18 @@ export default function Tienda({catalogo}) {
   const {codes:favoriteCodes,only:onlyFavorites,setOnly:setOnlyFavorites}=useFavorites();
   const [q,setQ]=useState(''), [cat,setCat]=useState('all'), [orden,setOrden]=useState('relevancia');
   const [pMin,setPMin]=useState(''), [pMax,setPMax]=useState(''), [limit,setLimit]=useState(48), [homeTab,setHomeTab]=useState('novedades'),[brandTab,setBrandTab]=useState('KARMA');
+  const [menuOpen,setMenuOpen]=useState(false);
+  const menuRef=useRef(null),menuButtonRef=useRef(null);
   const catRef=useRef(null), sectionRef=useRef(null), inputRef=useRef(null);
   useEffect(()=>setLimit(48),[q,cat,orden,pMin,pMax,onlyFavorites]);
   useEffect(()=>{if(onlyFavorites){setQ('');setCat('all');setPMin('');setPMax('');}},[onlyFavorites]);
+  useEffect(()=>{
+    if(!menuOpen)return;
+    const outside=e=>{if(!menuRef.current?.contains(e.target))setMenuOpen(false);};
+    const escape=e=>{if(e.key==='Escape'){setMenuOpen(false);menuButtonRef.current?.focus();}};
+    document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);
+    return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape);};
+  },[menuOpen]);
   const tokens=norm(q).split(/\s+/).filter(Boolean);
   const filtrados=useMemo(()=>{
     let result=catalogo.productos.filter(p=>{
@@ -62,7 +72,7 @@ export default function Tienda({catalogo}) {
   const brandProducts=useMemo(()=>catalogo.productos.filter(p=>norm(p.marca)===norm(brandTab)).slice(0,8),[catalogo.productos,brandTab]);
   const fecha=(catalogo.stockRevisado||catalogo.generado)?new Date(catalogo.stockRevisado||catalogo.generado).toLocaleDateString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'numeric',month:'long'}):null;
   const scrollCatalog=()=>requestAnimationFrame(()=>catRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
-  const explorar=(query='',category='all')=>{setOnlyFavorites(false);setQ(query);setCat(catalogo.categorias.some(c=>c.slug===category)?category:'all');setPMin('');setPMax('');scrollCatalog();};
+  const explorar=(query='',category='all')=>{setMenuOpen(false);setOnlyFavorites(false);setQ(query);setCat(catalogo.categorias.some(c=>c.slug===category)?category:'all');setPMin('');setPMax('');scrollCatalog();};
   const showTab=tab=>{setHomeTab(tab);requestAnimationFrame(()=>sectionRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
   const navCats=['TV y Video','Electrodomésticos','Aire Acondicionado','Celulares','Informática','Perfumes','Automóvil'].map(name=>{if(name==='Aire Acondicionado'){const c=catalogo.categorias.find(c=>c.slug==='electrodomesticos');return c?{...c,nombre:name,emoji:'❄️',query:'aire acondicionado',navKey:'aire'}:null;}return catalogo.categorias.find(c=>c.nombre===name||name==='Celulares'&&c.nombre==='Celulares y SmartPhones');}).filter(Boolean);
 
@@ -73,10 +83,16 @@ export default function Tienda({catalogo}) {
         <input ref={inputRef} type="search" aria-label="Buscar en el catálogo FVR" placeholder="Buscá productos, marcas o modelos…" value={q} onChange={e=>setQ(e.target.value)}/>{q?<button className="clear" aria-label="Limpiar búsqueda" onClick={()=>setQ('')}>×</button>:null}
       </div>
     </div></div>
-    <nav className="department-nav" aria-label="Categorías principales"><div className="container department-nav-inner"><button className="department-all" onClick={()=>{explorar();inputRef.current?.focus();}}>☰ <span>Todo el catálogo</span></button>{navCats.map(c=><button key={c.navKey||c.slug} className={cat===c.slug?'active':''} onClick={()=>explorar(c.query||'',c.slug)}><span>{c.emoji}</span>{c.nombre}</button>)}</div></nav>
+    <nav ref={menuRef} className="department-nav" aria-label="Categorías principales" onBlurCapture={e=>{if(e.relatedTarget&&!e.currentTarget.contains(e.relatedTarget))setMenuOpen(false);}}>
+      <div className="container department-nav-inner">
+        <button ref={menuButtonRef} className={`department-all ${menuOpen?'active':''}`} aria-label="Abrir todas las categorías" aria-expanded={menuOpen} aria-controls="all-departments-menu" onClick={()=>setMenuOpen(v=>!v)}><span aria-hidden="true">☰</span><span className="department-label">Categorías</span></button>
+        {navCats.map(c=><button key={c.navKey||c.slug} aria-label={c.nombre} className={(cat===c.slug&&(c.query?q===c.query:!q))?'active':''} onClick={()=>explorar(c.query||'',c.slug)}><span aria-hidden="true">{c.emoji}</span><span className="department-label"><span className="department-desktop-name">{c.nombre==='Celulares y SmartPhones'?'Celulares':c.nombre}</span><span className="department-mobile-name">{c.nombre==='Electrodomésticos'?'Electrodomést.':c.nombre==='Celulares y SmartPhones'?'Celulares':c.nombre}</span></span></button>)}
+      </div>
+      {menuOpen&&<div id="all-departments-menu" className="department-menu" role="region" aria-label="Todas las categorías"><div className="department-menu-head"><b>Todas las categorías</b><button aria-label="Cerrar categorías" onClick={()=>{setMenuOpen(false);menuButtonRef.current?.focus();}}>×</button></div><div className="department-menu-grid">{[...catalogo.categorias].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).map(c=><button key={c.slug} onClick={()=>explorar('',c.slug)}><span aria-hidden="true">{c.emoji}</span><span>{c.nombre}<small>{c.cantidad.toLocaleString('es-AR')} productos</small></span></button>)}</div><button className="department-menu-all" onClick={()=>explorar()}>Ver todo el catálogo ↗</button></div>}
+    </nav>
     {enHome&&<>
       <CampaignSlider onExplore={explorar}/>
-      <div className="service-ribbon"><div className="container"><b>FVR · Importación internacional</b><span>Envíos a todo el país</span><span>Pagá en pesos al valor del USDT</span><span>Atención directa por WhatsApp</span></div></div>
+      <div className="service-ribbon"><div className="container"><b>FVR · Logística internacional</b><span>Envíos a todo el país</span><span>Pagá en pesos al valor del USDT</span><span>Atención directa por WhatsApp</span></div></div>
     </>}
     <main className="catalogue-main">
       {enHome&&<>
@@ -89,12 +105,16 @@ export default function Tienda({catalogo}) {
         <BrandGallery onExplore={explorar}/>
         <section className="container brand-products-section"><div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Productos por marca">{['KARMA','SMARTFY','MIDEA','COBY','MT HELMETS'].map(b=><button key={b} role="tab" aria-selected={brandTab===b} onClick={()=>setBrandTab(b)}>{b}</button>)}</div><button className="section-link-btn" onClick={()=>explorar(brandTab)}>Ver más +</button></div><div className="grid home-product-grid">{brandProducts.map(p=><Card key={p.codigo} p={p} rate={rate}/>)}</div></section>
         <CategoryGallery categories={catalogo.categorias} products={catalogo.productos} onExplore={explorar}/>
-        <div className="container"><div className="buying-strip"><div><b>Armá tu pedido, nosotros te acompañamos.</b><p>Compra mínima US$250 · Precios en USDT · Consultá el envío en tu pedido.</p></div><a href="https://wa.me/543883372745" target="_blank" rel="noreferrer">Hablar con FVR ↗</a></div></div>
+        <div className="container"><div className="buying-strip"><div><b>Armá tu pedido, nosotros te acompañamos.</b><p>Compra mínima US$ {COMPRA_MINIMA} · Precios en USDT · Consultá el envío en tu pedido.</p></div><a href="https://wa.me/543883372745" target="_blank" rel="noreferrer">Hablar con FVR ↗</a></div></div>
       </>}
       <section ref={catRef} className="container catalogue-results" aria-label="Productos del catálogo">
         {onlyFavorites&&<div className="favorites-notice"><h2>Mis favoritos</h2><p>Guardados en este navegador. Se muestran los que están disponibles en el catálogo actual.</p><button onClick={()=>setOnlyFavorites(false)}>Volver al catálogo</button></div>}
-        <div className="cats"><button className={`chip ${cat==='all'?'active':''}`} onClick={()=>setCat('all')}>Todo <span className="c">{catalogo.productos.length.toLocaleString('es-AR')}</span></button>{catalogo.categorias.map(c=><button key={c.slug} className={`chip ${cat===c.slug?'active':''}`} onClick={()=>setCat(c.slug)}>{c.emoji} {c.nombre} <span className="c">{c.cantidad.toLocaleString('es-AR')}</span></button>)}</div>
-        <div className="toolbar"><select aria-label="Ordenar productos" className="tb-select" value={orden} onChange={e=>setOrden(e.target.value)}><option value="relevancia">Ordenar: Relevancia</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option></select><div className="tb-range"><input aria-label="Precio mínimo en dólares" className="tb-input" type="number" min="0" placeholder="Precio mín." value={pMin} onChange={e=>setPMin(e.target.value)}/><span className="tb-sep">—</span><input aria-label="Precio máximo en dólares" className="tb-input" type="number" min="0" placeholder="Precio máx." value={pMax} onChange={e=>setPMax(e.target.value)}/>{(pMin!==''||pMax!=='')&&<button className="tb-clear" onClick={()=>{setPMin('');setPMax('');}}>Limpiar</button>}</div></div>
+        <div className="catalogue-filter-panel"><div className="catalogue-filter-head"><b>Filtrá tu búsqueda</b>{(cat!=='all'||pMin!==''||pMax!==''||orden!=='relevancia')&&<button onClick={()=>{setCat('all');setPMin('');setPMax('');setOrden('relevancia');}}>Limpiar filtros</button>}</div><div className="catalogue-filter-fields">
+          <label>Categoría<select aria-label="Filtrar por categoría" value={cat} onChange={e=>setCat(e.target.value)}><option value="all">Todas las categorías</option>{[...catalogo.categorias].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).map(c=><option key={c.slug} value={c.slug}>{c.nombre} ({c.cantidad.toLocaleString('es-AR')})</option>)}</select></label>
+          <label>Ordenar<select aria-label="Ordenar productos" value={orden} onChange={e=>setOrden(e.target.value)}><option value="relevancia">Relevancia</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option></select></label>
+          <label>Precio mínimo (US$)<input aria-label="Precio mínimo en dólares" type="number" min="0" placeholder="Desde" value={pMin} onChange={e=>setPMin(e.target.value)}/></label>
+          <label>Precio máximo (US$)<input aria-label="Precio máximo en dólares" type="number" min="0" placeholder="Hasta" value={pMax} onChange={e=>setPMax(e.target.value)}/></label>
+        </div></div>
         <h2 className="section-title">{onlyFavorites?'Productos guardados':tokens.length?`Resultados para “${q}”`:cat==='all'?'Catálogo completo':catalogo.categorias.find(c=>c.slug===cat)?.nombre||'Productos'}</h2><div className="section-sub">{filtrados.length.toLocaleString('es-AR')} {filtrados.length===1?'producto':'productos'} {(!enHome&&cat!=='all')?<button className="reset-catalogue" onClick={()=>explorar()}>Ver todo el catálogo</button>:null}</div>
         {!filtrados.length?<div className="empty"><div className="big">⌕</div>No encontramos productos con ese criterio.<br/>Probá con otra palabra o ajustá los filtros.</div>:<><div className="grid">{filtrados.slice(0,limit).map(p=><Card key={p.codigo} p={p} rate={rate}/>)}</div>{filtrados.length>limit&&<div className="load-more-wrap"><button className="vermas" onClick={()=>setLimit(l=>l+48)}>Ver más productos <span>({(filtrados.length-limit).toLocaleString('es-AR')} más)</span></button></div>}</>}
       </section>
