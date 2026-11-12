@@ -103,6 +103,10 @@ async function main() {
       const grupo = grupoDisplay(cat, nameToTop);
       const precio = precioFVR({ usd, categoria: cat, marca: p.marca, titulo: p.titulo || '', pesoKg, recargo: recargoPara(p.titulo || '', cat) });
       const before = prevMap.get(p.codigo);
+      // The public snapshot omits stock counts; don't mistake an absent field for zero stock.
+      const tieneHistorialStock = before && Object.hasOwn(before, 'stock');
+      const nuevoDesde = before?.nuevoDesde || (before?.esNuevo ? prev.generado?.slice(0, 10) : null) ||
+        (before ? null : (hayPrev ? hoy : null));
       productos.push({
         codigo: p.codigo, titulo: p.titulo, slug: p.slug, marca: p.marca,
         categoria: cat, catNombre: grupo.nombre, catSlug: slugify(grupo.nombre), catEmoji: grupo.emoji,
@@ -117,9 +121,9 @@ async function main() {
         specs: (p.especificaciones_destacadas || []).map(s => ({ n: s.nombre, v: s.valor })),
         precio,
         // fecha en que apareció por primera vez -> "Novedades" durante 7 días (persistente entre syncs)
-        nuevoDesde: before?.nuevoDesde || (before ? null : (hayPrev ? hoy : null)),
-        esNuevo: esReciente(before?.nuevoDesde || (before ? null : (hayPrev ? hoy : null))),
-        repuesto: !!(before && (before.stock === 0 || before.stock == null) && (p.stock?.cantidad > 0)),
+        nuevoDesde,
+        esNuevo: esReciente(nuevoDesde),
+        repuesto: !!(tieneHistorialStock && (before.stock === 0 || before.stock == null) && (p.stock?.cantidad > 0)),
       });
     }
     cursor = data.paginacion?.siguiente_cursor;
