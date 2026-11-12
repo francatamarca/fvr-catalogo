@@ -13,7 +13,7 @@ const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,
 const precioDe=p=>p.precio.via==='fija'?p.precio.final_usd:p.precio.precio_unit_usd;
 
 function Card({p,rate}) {
-  const pv=priceView(p), {agregar}=useCart();
+  const {agregar,envios}=useCart(), pv=priceView(p,envios);
   return <article className="card">
     <div className="imgwrap"><div className="badges">
       {p.descuento?<span className="badge desc">-{Math.round(p.descuento)}%</span>:null}

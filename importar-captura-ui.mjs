@@ -67,7 +67,7 @@ for (const r of unique.values()) {
     categoria,catNombre:grupo.nombre,catSlug:grupo.slug||slugify(grupo.nombre),catEmoji:grupo.emoji,
     img:r.imgs[0]||before?.img||null,imgs:r.imgs.slice(1,6),madridUSD:r.usd,
     descuento,
-    pesoKg,vol:before?.vol??null,stock:null,disponible:true,
+    pesoKg,vol:before?.vol??null,medidasCm:before?.medidasCm??null,medidasRevisadas:before?.medidasRevisadas??null,stock:null,disponible:true,
     logisticaPendiente:pesoKg==null&&precio.via!=='fija',reacond:esReacondicionado(r.titulo),
     specs:before?.specs||[],precio,nuevoDesde,esNuevo,repuesto,
     ...(before?.ocultoAR?{ocultoAR:true,ar:before.ar}:{}),

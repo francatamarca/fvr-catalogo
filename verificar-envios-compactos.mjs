@@ -1,0 +1,35 @@
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import {gunzipSync} from 'node:zlib';
+import {calcCarrito,mensajePedido,VOLUMEN_AUTOMATICO_MAX_CM3} from './lib/cart.js';
+import {priceView,notaEnvio} from './lib/format.js';
+const c=JSON.parse(gunzipSync(fs.readFileSync('data/catalogo.public.json.gz')));
+const p=code=>{const found=c.productos.find(p=>String(p.codigo)===code);assert.ok(found);return found;};
+const item=(code,qty=1)=>{const x=p(code);return {...x,via:x.precio.via,precioUnit:x.precio.precio_unit_usd??x.precio.final_usd,m25:!!x.precio.m25,qty};};
+const t=items=>calcCarrito(items,c.envios);
+const juntos=t([item('904292'),item('1050264')]);
+assert.equal(juntos.subtotal,932);assert.equal(juntos.pesoReal,3.815);assert.equal(juntos.peso,4.32);
+assert.equal(juntos.consultar,false);assert.equal(juntos.gratis,true);assert.equal(juntos.total,932);
+assert.match(mensajePedido([item('904292'),item('1050264')],juntos,null),/GRATIS/);
+assert.equal(t([item('904292')]).gratis,true);
+for(const code of ['1050264','1155907','1077926','1073300']){
+  assert.equal(t([item(code)]).consultar,false);assert.equal(t([item(code)]).envio,23);
+  assert.match(priceView(p(code),c.envios).note,/23/);
+  assert.equal(p(code).medidasCm.length,3);
+}
+const base={via:'general',precioUnit:100,qty:1,pesoKg:1,vol:1000};
+assert.equal(t([{...base,pesoKg:5,vol:VOLUMEN_AUTOMATICO_MAX_CM3}]).envio,25);
+assert.equal(t([{...base,pesoKg:5,vol:VOLUMEN_AUTOMATICO_MAX_CM3}]).consultar,false);
+assert.equal(t([{...base,vol:VOLUMEN_AUTOMATICO_MAX_CM3+1}]).consultar,true);
+assert.equal(t([{...base,pesoKg:5.001,vol:0}]).envio,25);
+assert.equal(t([{...base,pesoKg:1,vol:17500,qty:3}]).consultar,true);
+assert.equal(t([{...base,pesoKg:51,vol:0}]).consultar,true);
+assert.equal(t([{...base,pesoKg:null,vol:null}]).consultar,true);
+assert.equal(t([{...base,via:'fija',pesoKg:51,vol:125000}]).consultar,false);
+assert.match(notaEnvio({...p('904292'),pesoKg:null,vol:null},c.envios),/falta peso y medidas/);
+assert.equal(notaEnvio(p('904292'),c.envios),'Gratis (1 u.)');
+const generales=c.productos.filter(p=>p.precio.via==='general');
+const afectados=generales.filter(p=>p.vol/5000>(p.pesoKg||0)&&p.vol<=VOLUMEN_AUTOMATICO_MAX_CM3);
+for(const x of afectados)assert.equal(t([item(String(x.codigo))]).consultar,false,'Compacto bloqueado '+x.codigo);
+console.log(JSON.stringify({compactosCorregidos:afectados.length,sinPesoNiVolumen:generales.filter(p=>!p.pesoKg&&!p.vol).length,pedidoUsuario:{pesoReal:juntos.pesoReal,pesoEnvio:juntos.peso,total:juntos.total,gratis:juntos.gratis}}));
+console.log('OK: cinco casos reales, cantidades, límites, gramos, datos faltantes y beneficios.');

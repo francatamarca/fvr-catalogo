@@ -67,7 +67,8 @@ export default function Cart() {
                   {tot.descuento1000 > 0 && (
                     <div className="trow descuento"><span>🎉 Descuento pedido +US$1000</span><b>−US$ {tot.descuento1000.toLocaleString('es-AR')}</b></div>
                   )}
-                  {tot.subGen > 0 && <div className="trow"><span>{tot.voluminoso ? 'Peso estimado por volumen' : 'Peso'}</span><b>{tot.pesoEstimado ? 'A confirmar' : `${tot.peso.toLocaleString('es-AR')} kg`}</b></div>}
+                  {tot.subGen > 0 && tot.porVolumen && !tot.pesoRealPendiente && <div className="trow"><span>Peso real informado</span><b>{tot.pesoReal.toLocaleString('es-AR')} kg</b></div>}
+                  {tot.subGen > 0 && <div className="trow"><span>{tot.porVolumen ? 'Peso para envío (incluye volumen)' : 'Peso'}</span><b>{tot.pesoEstimado ? 'A confirmar' : `${tot.peso.toLocaleString('es-AR')} kg`}</b></div>}
                   <div className="trow"><span>Envío nacional</span><b style={{ color: tot.gratis || tot.subGen === 0 ? 'var(--green)' : tot.consultar ? 'var(--accent-dark)' : 'inherit' }}>{tot.envioTxt}</b></div>
                   {tot.descuentoEnvio > 0 && (
                     <div className="trow descuento"><span>🎁 Descuento en envío (10 kg gratis)</span><b>−US$ {tot.descuentoEnvio.toLocaleString('es-AR')}</b></div>

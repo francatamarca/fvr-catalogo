@@ -3,14 +3,14 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRate } from './RateContext';
 import { useCart } from './CartContext';
-import { priceView, ars } from '../lib/format';
+import { priceView, ars, notaEnvio } from '../lib/format';
 import {FavoriteButton} from './FavoritesContext';
 import {COMPRA_MINIMA} from '../lib/cart';
 
 export default function Ficha({ p }) {
   const rate = useRate();
-  const { agregar } = useCart();
-  const pv = priceView(p);
+  const { agregar, envios } = useCart();
+  const pv = priceView(p,envios);
   const imgs = [p.img, ...(p.imgs || [])].filter(Boolean);
   const [main, setMain] = useState(imgs[0] || null);
   const [qty, setQty] = useState(1);
@@ -71,11 +71,12 @@ export default function Ficha({ p }) {
 
           <div className="card-info">
             <div className="row"><span className="k">Envío nacional</span><span className="v" style={{ color: esGeneral ? 'inherit' : 'var(--green)' }}>
-              {esGeneral ? 'Se calcula en tu pedido según el peso' : 'Incluido hasta tu ciudad ✓'}
+              {esGeneral ? notaEnvio(p,envios,qty) : 'Incluido hasta tu ciudad ✓'}
             </span></div>
             <div className="row"><span className="k">Compra mínima</span><span className="v">US$ {COMPRA_MINIMA} por pedido</span></div>
             <div className="row"><span className="k">Disponibilidad</span><span className="v" style={{ color: 'var(--green)' }}>Disponible en la última revisión ✓</span></div>
             {p.pesoKg ? <div className="row"><span className="k">Peso</span><span className="v">{p.pesoKg} kg</span></div> : null}
+            {p.medidasCm?.length===3 ? <div className="row"><span className="k">Medidas informadas</span><span className="v">{p.medidasCm.map(n=>n.toLocaleString('es-AR')).join(' × ')} cm</span></div> : null}
           </div>
 
           <button className="share" onClick={compartir}>
