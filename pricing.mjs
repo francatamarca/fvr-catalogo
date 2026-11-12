@@ -26,7 +26,7 @@ export function fleteNacional(pesoKg) {
 }
 
 // ---- Logística fija por unidad según categoría ----
-function logisticaFija(tipo, usd, marca = '') {
+function logisticaFija(tipo, usd, marca = '', titulo = '') {
   const esApple = marca.toLowerCase().includes('apple');
   if (tipo === 'notebook' || tipo === 'tablet') {
     if (usd > 2000) return 200;      // alta gama
@@ -35,6 +35,7 @@ function logisticaFija(tipo, usd, marca = '') {
     return 110;                      // < 500 USD -> flete más barato para competir con AR
   }
   if (tipo === 'celular') {
+    if (/\biphone\s*18\b/i.test(titulo)) return 150; // total sobre el USD del proveedor, confirmado por Francisco
     if (esApple || usd > 600) return 70; // alta gama / iPhone
     return 50;
   }
@@ -59,7 +60,7 @@ export function precioFVR(p) {
 
   if (tipoFijo) {
     // VÍA B — precio fijo por unidad, envío incluido, SIN combos
-    const fija = logisticaFija(tipoFijo, usd, marca);
+    const fija = logisticaFija(tipoFijo, usd, marca, titulo);
     const final = ceil(usd + fija + recargo);
     const altaGama = (tipoFijo === 'celular')
       ? (marca.toLowerCase().includes('apple') || usd > 600)

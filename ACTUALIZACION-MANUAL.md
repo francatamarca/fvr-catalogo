@@ -35,3 +35,13 @@ Formato de captura: `capturado` ISO de la última lectura, `source`, `categories
 7. Esperar READY en Vercel y comprobar la página real, su fecha, cantidad y fichas. La fecha pública es la fecha de lectura del proveedor, no la hora de la compilación.
 
 Las tarifas de envío guardadas en `data/envios.json` tienen su propia fecha. Una lectura de productos no representa una nueva cotización del transportista.
+
+## Reglas FVR y tarifas nacionales (12/11/2026)
+
+- Para cambiar únicamente reglas comerciales, respaldar el catálogo privado y ejecutar `node recalcular-precios.mjs ruta/captura-conciliada.json`. Conserva las fechas originales de proveedor y stock. Después ejecutar `node publish.mjs` y los verificadores.
+- iPhone 18: USD del proveedor +150 total; iPhone 17 mantiene +80 total. Microondas: recargo adicional +20 después del porcentaje. Los demás importes fijos permanecen iguales.
+- Para renovar Vía Cargo, leer el formulario oficial en Chrome normal. Referencia: Puerto Iguazú → San Salvador de Jujuy, un bulto, declarado ARS100.000 y pago en destino. Registrar los 14 pesos (1/2/3/5/7/10/12/15/20/25/30/40/50/60), medidas y texto visible con hora real. No ejecutar el cotizador legado con un navegador automatizado en esta sesión.
+- Con la captura completa y una cotización pública USDT actual: `node importar-envios-verificados.mjs captura-via-cargo.json cotizacion-usdt.json`. El importador verifica condiciones, los 14 tramos, evidencia y antigüedad máxima de 24 horas. Domicilio / USDT +5; sólo a falta de domicilio, agencia / USDT +10; redondeo hacia arriba.
+- El formulario usa decimales con punto: `65999.99` son ARS65.999,99. No quitar ese punto ni interpretar una tarifa con centavos como un valor centinela de millones.
+- La prueba de volumen no permite validar un divisor universal: 5kg con caja 50cm cuesta ARS89.999,99. El divisor 5.000 sólo detecta bultos voluminosos, cuyo envío queda a cotizar por medidas. Tampoco se promete domicilio automático para un bulto de más de 50kg, límite escrito en el servicio aunque el formulario devuelva precio para 60kg. El tramo 60kg se conserva como referencia para pedidos repartidos en bultos menores.
+- Ejecutar `node verificar-recargos-envios.mjs ruta/catalogo-anterior.json` y `node verificar-publicacion.mjs ruta/captura-conciliada.json`, compilar, publicar y verificar el dominio real. Los precios guardados del pedido se actualizan con la nueva publicación.

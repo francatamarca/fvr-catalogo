@@ -15,16 +15,17 @@ assert.equal(new Set(c.productos.map(p=>String(p.codigo))).size,c.total);
 assert.equal(c.categorias.reduce((n,x)=>n+x.cantidad,0),c.total);
 assert.equal(COMPRA_MINIMA,300);
 const shipping=JSON.parse(readFileSync('data/envios.json','utf8'));
+const tramo=kg=>shipping.tabla.find(t=>kg<=t.kg).usd;
 const item=(precio,extra={})=>({via:'general',precioUnit:precio,qty:1,pesoKg:1,...extra});
 const belowMinimum=calcCarrito([item(299)],shipping);
 assert.equal(belowMinimum.minimoOk,false);assert.equal(belowMinimum.faltaMinimo,1);
-assert.equal(belowMinimum.total,323); // El envío no completa la compra mínima.
+assert.equal(belowMinimum.total,299+tramo(1)); // El envío no completa la compra mínima.
 assert.equal(calcCarrito([item(300)],shipping).minimoOk,true);
 assert.equal(calcCarrito([item(299,{via:'fija'})],shipping).minimoOk,false);
 assert.equal(calcCarrito([item(150,{via:'fija'}),item(150)],shipping).minimoOk,true);
-assert.equal(calcCarrito([item(499,{pesoKg:5})],shipping).envio,24);
+assert.equal(calcCarrito([item(499,{pesoKg:5})],shipping).envio,tramo(5));
 assert.equal(calcCarrito([item(500,{pesoKg:5})],shipping).envio,0);
-assert.equal(calcCarrito([item(600,{pesoKg:12})],shipping).envio,10);
+assert.equal(calcCarrito([item(600,{pesoKg:12})],shipping).envio,tramo(12)-tramo(10));
 const wholesale=calcCarrito([item(1000,{pesoKg:5})],shipping);
 assert.equal(wholesale.descuento1000,74);assert.equal(wholesale.total,926);
 assert.ok(!/"(?:base_usd|madridUSD|stock|ocultoAR|ar)"\s*:/.test(publicText));
@@ -68,7 +69,7 @@ if(process.argv[2]){
   }
   const iphone=c.productos.find(p=>/^Celular Apple iPhone 18\b/i.test(p.titulo));
   assert.ok(iphone,'El catálogo debe incluir los iPhone 18 de la fuente actual');
-  assert.equal(iphone.precio.final_usd,Math.ceil(rows.get(String(iphone.codigo)).usd+70));
+  assert.equal(iphone.precio.final_usd,Math.ceil(rows.get(String(iphone.codigo)).usd+150));
   const perfume=c.productos.find(p=>p.catNombre==='Perfumes'&&rows.get(String(p.codigo))?.usd<100&&p.precio.via==='general');
   assert.equal(perfume.precio.precio_unit_usd,Math.ceil(rows.get(String(perfume.codigo)).usd*1.35));
   const hash=()=>createHash('sha256').update(readFileSync('data/catalogo.json')).digest('hex');

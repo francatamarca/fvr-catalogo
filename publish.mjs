@@ -12,7 +12,7 @@ if (!c.generado || !Number.isFinite(Date.parse(c.generado)) || !Array.isArray(c.
 let envios = null;
 if (existsSync('data/envios.json')) {
   const e = JSON.parse(readFileSync('data/envios.json', 'utf8'));
-  envios = { generado: e.generado, divisor_volumetrico: e.divisor_volumetrico, tabla: e.tabla.map(t => ({ kg: t.kg, usd: t.usd })) };
+  envios = { generado: e.generado, cotizadoHasta:e.cotizadoHasta, divisor_volumetrico: e.divisor_volumetrico, voluminosos_a_cotizar:e.voluminosos_a_cotizar, max_peso_bulto_kg:e.max_peso_bulto_kg, tabla: e.tabla.map(t => ({ kg: t.kg, usd: t.usd })) };
 }
 const visibles = c.productos.filter(p => !p.ocultoAR);
 const ocultosAR = c.productos.length - visibles.length;
@@ -25,7 +25,7 @@ for (const p of visibles) {
 }
 
 const pub = {
-  generado: c.generado, stockRevisado:c.stockRevisado||c.generado, lecturaIniciada:c.lecturaIniciada||c.generado, total: visibles.length,
+  generado: c.generado, stockRevisado:c.stockRevisado||c.generado, lecturaIniciada:c.lecturaIniciada||c.generado, reglasPreciosActualizadas:c.reglasPreciosActualizadas, total: visibles.length,
   categorias: [...catMap.values()].sort((a, b) => b.cantidad - a.cantidad),
   resumen: { ...c.resumen, ocultos_por_precio_ar: ocultosAR },
   envios,

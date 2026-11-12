@@ -1,98 +1,135 @@
 {
-  "generado": "2026-07-30T03:58:48.956Z",
-  "usdt": 1593,
-  "origen": "PUERTO IGUAZU (3370)",
-  "destino": "SAN SALVADOR DE JUJUY (4607)",
-  "regla": "domicilio+5USD o sucursal+10USD, declarado 100000, pago en destino",
+  "generado": "2026-11-12T18:09:14.125Z",
+  "cotizadoDesde": "2026-11-12T16:18:12.176Z",
+  "cotizadoHasta": "2026-11-12T18:03:50.664Z",
+  "fuente": "https://formularios.viacargo.com.ar/",
+  "usdt": 1668.15,
+  "usdtFuente": "https://criptoya.com/api/dolar",
+  "usdtCapturado": "2026-11-12T18:06:58.180Z",
+  "origen": "PUERTO IGUAZU (3370) - MISIONES",
+  "destino": "SAN SALVADOR DE JUJUY (4607) - JUJUY",
+  "bultos": 1,
+  "valorDeclarado": 100000,
+  "pago": "destino",
+  "regla": "domicilio+5USD o sucursal+10USD; redondeo hacia arriba",
   "divisor_volumetrico": 5000,
-  "sonda_volumetrica": {
-    "dom": 12499999,
-    "suc": 9999999
-  },
+  "voluminosos_a_cotizar": true,
+  "max_peso_bulto_kg": 50,
+  "nota": "Tarifa de referencia. Las medidas y el peso se confirman al despachar. El servicio a domicilio informa hasta 50kg por bulto; los bultos superiores requieren confirmación.",
+  "sondas_volumetricas": [
+    {
+      "kg": 5,
+      "lado": 60,
+      "ars_dom": 124999.99,
+      "ars_suc": 99999.99,
+      "capturado": "2026-11-12T16:22:05.327Z"
+    },
+    {
+      "kg": 54,
+      "lado": 55,
+      "ars_dom": 124999.99,
+      "ars_suc": 99999.99,
+      "capturado": "2026-11-12T18:01:27.800Z"
+    },
+    {
+      "kg": 5,
+      "lado": 44,
+      "ars_dom": 49000,
+      "ars_suc": 38000,
+      "capturado": "2026-11-12T18:01:28.660Z"
+    },
+    {
+      "kg": 5,
+      "lado": 50,
+      "ars_dom": 89999.99,
+      "ars_suc": 73000,
+      "capturado": "2026-11-12T18:01:29.559Z"
+    }
+  ],
   "tabla": [
     {
       "kg": 1,
       "ars_dom": 30000,
       "ars_suc": 22000,
-      "usd": 24
+      "usd": 23
     },
     {
       "kg": 2,
       "ars_dom": 30000,
       "ars_suc": 22000,
-      "usd": 24
+      "usd": 23
     },
     {
       "kg": 3,
       "ars_dom": 30000,
       "ars_suc": 22000,
-      "usd": 24
+      "usd": 23
     },
     {
       "kg": 5,
       "ars_dom": 30000,
       "ars_suc": 22000,
-      "usd": 24
+      "usd": 23
     },
     {
       "kg": 7,
       "ars_dom": 33000,
       "ars_suc": 24000,
-      "usd": 26
+      "usd": 25
     },
     {
       "kg": 10,
       "ars_dom": 33000,
       "ars_suc": 24000,
-      "usd": 26
+      "usd": 25
     },
     {
       "kg": 12,
       "ars_dom": 49000,
       "ars_suc": 38000,
-      "usd": 36
+      "usd": 35
     },
     {
       "kg": 15,
       "ars_dom": 49000,
       "ars_suc": 38000,
-      "usd": 36
+      "usd": 35
     },
     {
       "kg": 20,
       "ars_dom": 49000,
       "ars_suc": 38000,
-      "usd": 36
+      "usd": 35
     },
     {
       "kg": 25,
-      "ars_dom": null,
+      "ars_dom": 65999.99,
       "ars_suc": 52000,
-      "usd": 43
+      "usd": 45
     },
     {
       "kg": 30,
-      "ars_dom": null,
+      "ars_dom": 65999.99,
       "ars_suc": 52000,
-      "usd": 43
+      "usd": 45
     },
     {
       "kg": 40,
-      "ars_dom": null,
+      "ars_dom": 89999.99,
       "ars_suc": 73000,
-      "usd": 56
+      "usd": 59
     },
     {
       "kg": 50,
       "ars_dom": 112000,
       "ars_suc": 93000,
-      "usd": 76
+      "usd": 73
     },
     {
       "kg": 60,
-      "ars_dom": null,
+      "ars_dom": 135999.99,
       "ars_suc": 110000,
-      "usd": 80
+      "usd": 87
     }
   ]
 }

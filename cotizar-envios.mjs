@@ -6,6 +6,7 @@ import puppeteer from 'puppeteer-core';
 import { writeFile, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { CHROME_PATH, UA } from './config.mjs';
+import { leerCotizacion, tarifaUSD } from './lib/envios.js';
 
 const FORM = 'https://formularios.viacargo.com.ar/';
 const PESOS = [1, 2, 3, 5, 7, 10, 12, 15, 20, 25, 30, 40, 50, 60];
@@ -61,13 +62,7 @@ async function cotizar(page, kg, dims) {
   await page.evaluate(() => { const b = document.querySelector('button[type=submit]'); if (b && !b.disabled) b.click(); });
   await sleep(3200);
 
-  return page.evaluate(() => {
-    const txt = document.body.innerText;
-    const bloque = (re) => { const m = txt.match(re); return m ? Number(m[1].replace(/\./g, '')) : null; };
-    const dom = bloque(/ENTREGA DOMICILIO[\s\S]{0,120}?\$\s?([\d\.]+)/);
-    const suc = bloque(/ENTREGA AGENCIA[\s\S]{0,120}?\$\s?([\d\.]+)/);
-    return { dom, suc };
-  });
+  return leerCotizacion(await page.evaluate(() => document.body.innerText));
 }
 
 async function main() {
@@ -87,12 +82,12 @@ async function main() {
       if (r && r.dom == null && r.suc == null) r = null;
     }
     if (!r) { console.log(`  ${kg}kg: SIN cotización`); continue; }
-    // Via Cargo devuelve valores centinela (~$6-13 millones) cuando el servicio no está disponible
-    const dom = (r.dom != null && r.dom < 1000000) ? r.dom : null;
-    const suc = (r.suc != null && r.suc < 1000000) ? r.suc : null;
+    // El formulario devuelve centavos con punto: 65999.99 es una tarifa válida.
+    const dom = r.dom;
+    const suc = r.suc;
     r = { dom, suc };
     if (dom == null && suc == null) { console.log(`  ${kg}kg: sin servicio disponible`); continue; }
-    const usd = dom != null ? Math.ceil(dom / rate + 5) : Math.ceil(suc / rate + 10);
+    const usd = tarifaUSD(dom, suc, rate);
     tabla.push({ kg, ars_dom: r.dom, ars_suc: r.suc, usd });
     console.log(`  ${kg}kg (caja ${dims}cm): domicilio $${r.dom ?? '—'} | sucursal $${r.suc ?? '—'} -> FVR US$${usd}`);
   }
@@ -113,6 +108,8 @@ async function main() {
     origen: 'PUERTO IGUAZU (3370)', destino: 'SAN SALVADOR DE JUJUY (4607)',
     regla: 'domicilio+5USD o sucursal+10USD, declarado 100000, pago en destino',
     divisor_volumetrico: 5000,
+    voluminosos_a_cotizar: true,
+    max_peso_bulto_kg: 50,
     sonda_volumetrica: volProbe,
     tabla,
   };
