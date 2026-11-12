@@ -6,6 +6,8 @@ import Cart from '../components/Cart';
 import UsdtBar from '../components/UsdtBar';
 import Logo from '../components/Logo';
 import { getCatalogo } from '../lib/catalogo';
+import {FavoritesProvider,FavoritesHeaderButton} from '../components/FavoritesContext';
+import {WhatsAppIcon} from '../components/Icons';
 
 const jakarta = Plus_Jakarta_Sans({ subsets: ['latin'], weight: ['400', '500', '600', '700', '800'] });
 
@@ -43,11 +45,12 @@ export default async function RootLayout({ children }) {
       <body className={jakarta.className}>
         <RateProvider>
           <CartProvider envios={envios} vigentes={vigentes}>
+          <FavoritesProvider>
           <UsdtBar />
           <header className="top">
             <div className="container top-row">
               <Logo />
-              <a className="contact-top" href="https://wa.me/543883372745" target="_blank" rel="noreferrer">💬 <span>WhatsApp FVR</span></a>
+              <div className="header-actions"><FavoritesHeaderButton/><a className="contact-top" href="https://wa.me/543883372745" target="_blank" rel="noreferrer"><WhatsAppIcon/> <span>WhatsApp FVR</span></a></div>
             </div>
           </header>
           {children}
@@ -65,6 +68,7 @@ export default async function RootLayout({ children }) {
               </div>
             </div>
           </footer>
+          </FavoritesProvider>
           </CartProvider>
         </RateProvider>
       </body>

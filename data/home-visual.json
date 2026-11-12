@@ -1,0 +1,135 @@
+{
+  "logos": [
+    {
+      "name": "SMARTFY",
+      "src": "/marcas/smartfy.webp"
+    },
+    {
+      "name": "MT HELMETS",
+      "src": "/marcas/mt-helmets.webp"
+    },
+    {
+      "name": "KARMA",
+      "src": "/marcas/karma.webp"
+    },
+    {
+      "name": "AXXIS",
+      "src": "/marcas/axxis.webp"
+    },
+    {
+      "name": "COBY",
+      "src": "/marcas/coby.webp"
+    },
+    {
+      "name": "KIESLECT",
+      "src": "/marcas/kieslect.webp"
+    },
+    {
+      "name": "LATTAFA",
+      "src": "/marcas/lattafa.webp"
+    },
+    {
+      "name": "WYBOT",
+      "src": "/marcas/wybot.webp"
+    },
+    {
+      "name": "MAGNAVOX",
+      "src": "/marcas/magnavox.webp"
+    },
+    {
+      "name": "MIDEA",
+      "src": "/marcas/midea.webp"
+    },
+    {
+      "name": "APPLE",
+      "src": "/marcas/apple.webp"
+    },
+    {
+      "name": "XIAOMI",
+      "src": "/marcas/xiaomi.webp"
+    },
+    {
+      "name": "AMAZON",
+      "src": "/marcas/amazon.webp"
+    },
+    {
+      "name": "JBL",
+      "src": "/marcas/jbl.webp"
+    },
+    {
+      "name": "SAMSUNG",
+      "src": "/marcas/samsung.webp"
+    },
+    {
+      "name": "REALME",
+      "src": "/marcas/realme.webp"
+    }
+  ],
+  "categories": [
+    {
+      "name": "eletroportateis-0kEgRgUS.webp",
+      "src": "/categorias/eletroportateis-0kEgRgUS.webp",
+      "alt": "Electrodomésticos"
+    },
+    {
+      "name": "smartphones-B1pB4r58.webp",
+      "src": "/categorias/smartphones-B1pB4r58.webp",
+      "alt": "Celulares y SmartPhones"
+    },
+    {
+      "name": "automotivo-CuMwOOo8.webp",
+      "src": "/categorias/automotivo-CuMwOOo8.webp",
+      "alt": "Automóvil"
+    },
+    {
+      "name": "fone-C6DCSolB.webp",
+      "src": "/categorias/fone-C6DCSolB.webp",
+      "alt": "Audio"
+    },
+    {
+      "name": "chapinha-CLsmUGlT.webp",
+      "src": "/categorias/chapinha-CLsmUGlT.webp",
+      "alt": "Belleza y Salud"
+    },
+    {
+      "name": "drone-582mlRjn.webp",
+      "src": "/categorias/drone-582mlRjn.webp",
+      "alt": "Cámaras y Drones"
+    },
+    {
+      "name": "funko-DOyZ_eCp.webp",
+      "src": "/categorias/funko-DOyZ_eCp.webp",
+      "alt": "Juguetes y Otros"
+    },
+    {
+      "name": "esmeril-B-9dQVHG.webp",
+      "src": "/categorias/esmeril-B-9dQVHG.webp",
+      "alt": "Herramienta"
+    },
+    {
+      "name": "controle-CO1u0FuC.webp",
+      "src": "/categorias/controle-CO1u0FuC.webp",
+      "alt": "Gamer"
+    },
+    {
+      "name": "lampara-BfDM3vMN.webp",
+      "src": "/categorias/lampara-BfDM3vMN.webp",
+      "alt": "Iluminación y LED"
+    },
+    {
+      "name": "impressora-Dkzy6Dp4.webp",
+      "src": "/categorias/impressora-Dkzy6Dp4.webp",
+      "alt": "Informática"
+    },
+    {
+      "name": "maleta-B1AqwbCF.webp",
+      "src": "/categorias/maleta-B1AqwbCF.webp",
+      "alt": "Maletas para Viaje"
+    },
+    {
+      "name": "perfume-CoyRTf56.webp",
+      "src": "/categorias/perfume-CoyRTf56.webp",
+      "alt": "Perfumes"
+    }
+  ]
+}

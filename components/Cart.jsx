@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useCart } from './CartContext';
 import { useRate } from './RateContext';
 import { calcCarrito, mensajePedido, linkPedidoWhatsApp, COMPRA_MINIMA } from '../lib/cart';
+import {WhatsAppIcon} from './Icons';
 
 export default function Cart() {
   const { items, count, setQty, quitar, vaciar, abierto, setAbierto, envios, pedidoActualizado } = useCart();
@@ -23,7 +24,7 @@ export default function Cart() {
         🛒{count > 0 && <span className="cart-count">{count}</span>}
       </button>
       <a className="whatsapp-fab" href="https://wa.me/543883372745" target="_blank" rel="noreferrer" aria-label="Contactar a FVR por WhatsApp">
-        <span aria-hidden="true">◉</span><span>Contactar FVR</span>
+        <WhatsAppIcon/><span>Contactar FVR</span>
       </a>
 
       {abierto && (

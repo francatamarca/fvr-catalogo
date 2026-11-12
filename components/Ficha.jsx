@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRate } from './RateContext';
 import { useCart } from './CartContext';
 import { priceView, ars } from '../lib/format';
+import {FavoriteButton} from './FavoritesContext';
 
 export default function Ficha({ p }) {
   const rate = useRate();
@@ -42,6 +43,7 @@ export default function Ficha({ p }) {
         <div>
           <div className="catlink">{p.catEmoji} {p.catNombre} · {p.marca}</div>
           <h1>{p.titulo}</h1>
+          <FavoriteButton code={p.codigo} title={p.titulo} withText/>
 
           <div>
             {p.descuento ? <span className="badge desc" style={{ display: 'inline-block', marginBottom: 12, marginRight: 8 }}>Oferta -{Math.round(p.descuento)}%</span> : null}
