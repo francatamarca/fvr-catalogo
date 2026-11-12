@@ -3,6 +3,7 @@
 // La captura y catalogo.json contienen costos: nunca se publican.
 import { readFile, writeFile, rename } from 'node:fs/promises';
 import { precioFVR } from './pricing.mjs';
+import {textoEspanol,departamentoEspanol} from './lib/idioma.js';
 import { pasaFiltroArgentina, esReacondicionado, grupoDisplay, slugify, recargoPara,
   PESO_MAX_KG, esExcluidoEspecial } from './config.mjs';
 
@@ -23,7 +24,7 @@ const previous = JSON.parse(await readFile(process.argv[3] || 'data/catalogo.jso
 const prev = new Map(previous.productos.map(p => [String(p.codigo), p]));
 const unique = new Map();
 for (const r of source.rows) {
-  if (!/^\d+$/.test(r.codigo) || !r.titulo || typeof r.available !== 'boolean' || !Number.isFinite(r.usd) || r.usd <= 0 ||
+  if (!/^\d+$/.test(r.codigo) || !r.titulo || typeof r.available !== 'boolean' || r.available&&(!Number.isFinite(r.usd) || r.usd <= 0) ||
       !source.categoriesExpected.includes(r.categoria)) throw new Error('Fila de proveedor inválida.');
   const old = unique.get(r.codigo);
   if (old && (old.usd !== r.usd || old.available !== r.available)) throw new Error(`Datos contradictorios para ${r.codigo}`);
@@ -44,12 +45,12 @@ for (const r of unique.values()) {
   if (/^(?:notebook|ultrabook|apple macbook|macbook)\b/i.test(r.titulo)) categoria='Notebook';
   else if (/^(?:tablet|apple ipad|ipad)\b/i.test(r.titulo)) categoria='Tablet';
   else if (/^(?:celular|smartphone|apple iphone|iphone)\b/i.test(r.titulo)) categoria='Celular';
-  else if (!before && r.categoria==='Celulares e SmartPhones') categoria='Telefonía y accesorios';
+  else if (!before && ['Celulares e SmartPhones','Celulares y SmartPhones'].includes(r.categoria)) categoria='Telefonía y accesorios';
   if (!pasaFiltroArgentina(r.usd,categoria)) { counters.ocultos_por_piso++; continue; }
   const pesoKg=before?.pesoKg ?? null;
   if (pesoKg!=null && pesoKg>PESO_MAX_KG) { counters.excluidos_por_peso++; continue; }
   if (esExcluidoEspecial(r.titulo,categoria)) { counters.excluidos_especiales++; continue; }
-  const grupo=grupoDisplay(categoria);
+  const grupo=(source.idioma==='es'&&departamentoEspanol(r.categoria))||grupoDisplay(categoria);
   // Console es el nombre portugués mostrado por la web; la tarifa PS5 utiliza Consola.
   const tituloPrecio=r.titulo.replace(/^Console\b/i,'Consola');
   const precio=precioFVR({usd:r.usd,categoria,marca,titulo:tituloPrecio,pesoKg,recargo:recargoPara(tituloPrecio,categoria)});
@@ -62,8 +63,8 @@ for (const r of unique.values()) {
   const precioAnterior=r.oldUSD>r.usd?precioFVR({usd:r.oldUSD,categoria,marca,titulo:tituloPrecio,pesoKg,recargo:recargoPara(tituloPrecio,categoria)}):null;
   const unit=p=>p.via==='fija'?p.final_usd:p.precio_unit_usd;
   const descuento=precioAnterior&&unit(precioAnterior)>unit(precio)?Math.round((1-unit(precio)/unit(precioAnterior))*100):null;
-  productos.push({codigo:r.codigo,titulo:before?.titulo || r.titulo,slug:r.href.split('/').at(-1),marca,
-    categoria,catNombre:grupo.nombre,catSlug:slugify(grupo.nombre),catEmoji:grupo.emoji,
+  productos.push({codigo:r.codigo,titulo:textoEspanol(source.idioma==='es'?r.titulo:before?.titulo || r.titulo),slug:r.href.split('/').at(-1),marca,
+    categoria,catNombre:grupo.nombre,catSlug:grupo.slug||slugify(grupo.nombre),catEmoji:grupo.emoji,
     img:r.imgs[0]||before?.img||null,imgs:r.imgs.slice(1,6),madridUSD:r.usd,
     descuento,
     pesoKg,vol:before?.vol??null,stock:null,disponible:true,
@@ -78,7 +79,7 @@ const categories=new Map();
 for(const p of productos){if(!categories.has(p.catSlug))categories.set(p.catSlug,{slug:p.catSlug,nombre:p.catNombre,emoji:p.catEmoji,cantidad:0});categories.get(p.catSlug).cantidad++;}
 const now=new Set(productos.map(p=>p.codigo));
 counters.pasaron_a_sin_stock=previous.productos.filter(p=>!now.has(String(p.codigo))).length;
-const out={generado:source.capturado,publicado:new Date().toISOString(),total:productos.length,categorias:[...categories.values()].sort((a,b)=>b.cantidad-a.cantidad),
+const out={generado:source.capturado,stockRevisado:source.stockRevisado||source.capturado,lecturaIniciada:source.lecturaIniciada||source.capturado,publicado:new Date().toISOString(),total:productos.length,categorias:[...categories.values()].sort((a,b)=>b.cantidad-a.cantidad),
   fuente:{metodo:'listados públicos visibles de Madrid Center',capturado:source.capturado,categorias_validadas:source.reports.length},resumen:counters,productos};
 await writeFile('data/catalogo.json.tmp',JSON.stringify(out));
 await rename('data/catalogo.json.tmp','data/catalogo.json');

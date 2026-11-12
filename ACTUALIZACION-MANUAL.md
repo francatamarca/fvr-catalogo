@@ -4,6 +4,16 @@ Francisco acepta pedir la actualización cuando enciende la PC. No es necesario 
 
 ## Lectura
 
+La disponibilidad cambió durante el 12/11. La publicación de las 01:27 ya no coincidía con la de las 11:35. Siempre hacer una lectura nueva; no reimportar un respaldo del mismo día como si fuera una revisión nueva.
+
+Para conservar español y disponibilidad: leer los listados de la vista Paraguay `/es/` y tomar sus títulos, códigos y botones. Un botón deshabilitado o con etiqueta “no disponible” significa no disponible incluso sin cartel “Agotado”. La búsqueda también puede conservar una respuesta vieja hasta recargarla.
+
+Selector de tarjetas verificado: `main div[aria-label^="Tarjeta de"]`. No omitir `div`: un botón de compra deshabilitado de una tarjeta de memoria también puede empezar con “Tarjeta de”. Comprobar la presencia de `h3`, código y control de compra.
+
+Ordenar por “Nuevo”, leer 100 por página, esperar el texto de rango nuevo y reobservar antes de leer tarjetas. Guardar después de cada página. Los contadores del proveedor pueden quedar una unidad atrás de las tarjetas de la última página: registrar esa diferencia y comprobar que “Página siguiente” esté deshabilitada. Registrar y deduplicar códigos repetidos del proveedor; ante disponibilidad contradictoria detener la importación y comprobar el producto.
+
+Conservar el archivo USD anterior con su hora real. Para nuevas referencias sin costo USD, usar la búsqueda pública de Brasil por código y guardar el precio USD observado. No convertir guaraníes ni asignar precios ficticios. `conciliar-stock-ui.mjs` combina stock y nombres ES con los USD observados; `importar-captura-ui.mjs` y `publish.mjs` aplican las reglas FVR y saneado. La página distingue la fecha de revisión de stock de la fecha de precios de referencia.
+
 - Usar la pestaña normal abierta de Madrid Center con las herramientas de navegador disponibles. No lanzar perfiles automatizados para continuar desafíos anti-bots: ese método fue rechazado por la revisión automática.
 - En la vista Brasil se muestran los USD de exportación. La vista Paraguay muestra guaraníes con IVA: no convertir ese precio a USD para alimentar el catálogo.
 - Abrir `/categorias`, recorrer sus 21 categorías excepto Comestíveis, seleccionar 100 por página y usar los controles de paginación visibles.

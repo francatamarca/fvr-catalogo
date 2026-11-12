@@ -9,9 +9,10 @@ export function CategoryGallery({categories,products,onExplore}) {
   const [page,setPage]=useState(0);
   const featured=[{name:'Electrodomésticos',slug:'electrodomesticos',emoji:'⌂'},{name:'Celulares y SmartPhones',slug:'celulares',emoji:'▯'},{name:'Automóvil',slug:'automovil',emoji:'♧'}];
   const slugFor=name=>categories.find(c=>c.nombre===name)?.slug;
-  const others=[...categories].filter(c=>!featured.some(f=>f.slug===c.slug)).sort((a,b)=>a.nombre.localeCompare(b.nombre,'es'));
+  const categoryOrder=['Audio','Belleza y Salud','Juguetes y Otros','Cámaras y Drones','Herramienta','Gamer','Iluminación y LED','Informática','Maletas para Viaje','Motociclismo','Perfumes','Accesorios y Periféricos','Calculadora','Receptores y Accesorios','Reloj','Seguridad','TV y Video','Termos y Vasos Térmicos'];
+  const others=[...categories].filter(c=>!featured.some(f=>f.slug===c.slug)).sort((a,b)=>categoryOrder.indexOf(a.nombre)-categoryOrder.indexOf(b.nombre));
   const pages=Math.max(1,Math.ceil(others.length/12));
-  const remainingImages={'Accesorios y Periféricos':'Audio','Calculadoras':'Informática','Calculadora':'Informática','Receptores y Accesorios':'Informática','Seguridad':'Cámaras y Drones','Termos y Vasos Térmicos':'Electrodomésticos','Relojes':'Motociclismo','Reloj':'Motociclismo','TV y Video':'Informática','Notebooks':'Informática','Tablets':'Celulares y SmartPhones','Otros':'Maletas para Viaje'};
+  const remainingImages={};
   return <section className="category-gallery" aria-labelledby="explore-categories"><div className="container category-gallery-inner">
     <h2 id="explore-categories">EXPLORAR CATEGORÍAS</h2>
     <div className="category-major-grid">{featured.map(c=>{

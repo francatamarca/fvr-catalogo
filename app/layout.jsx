@@ -31,10 +31,11 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  let actualizado = null, envios = null, vigentes = [];
+  let actualizado = null, stockRevisado=null, envios = null, vigentes = [];
   try {
     const c = await getCatalogo();
     if (c.generado) actualizado = new Date(c.generado).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+    if (c.stockRevisado) stockRevisado = new Date(c.stockRevisado).toLocaleString('es-AR', { timeZone:'America/Argentina/Buenos_Aires',day:'numeric',month:'long',hour:'2-digit',minute:'2-digit' });
     envios = c.envios || null;
     vigentes = c.productos.map(p => [String(p.codigo), p.precio.via,
       p.precio.via === 'fija' ? p.precio.final_usd : p.precio.precio_unit_usd,
@@ -63,7 +64,8 @@ export default async function RootLayout({ children }) {
               </div>
               <div style={{ textAlign: 'right' }}>
                 <div style={{ opacity: .8 }}>Catálogo de referencia · Los precios pueden variar según cotización y stock.</div>
-                {actualizado ? <div className="fupd">Stock y precios actualizados: {actualizado}</div> : null}
+                {stockRevisado ? <div className="fupd">Disponibilidad revisada: {stockRevisado}</div> : null}
+                {actualizado ? <div className="fupd">Precios de referencia: {actualizado}</div> : null}
                 <a className="footer-whatsapp" href="https://wa.me/543883372745" target="_blank" rel="noreferrer">Contactar a FVR por WhatsApp →</a>
               </div>
             </div>

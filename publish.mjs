@@ -25,7 +25,7 @@ for (const p of visibles) {
 }
 
 const pub = {
-  generado: c.generado, total: visibles.length,
+  generado: c.generado, stockRevisado:c.stockRevisado||c.generado, lecturaIniciada:c.lecturaIniciada||c.generado, total: visibles.length,
   categorias: [...catMap.values()].sort((a, b) => b.cantidad - a.cantidad),
   resumen: { ...c.resumen, ocultos_por_precio_ar: ocultosAR },
   envios,

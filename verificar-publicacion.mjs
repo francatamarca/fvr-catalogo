@@ -43,6 +43,15 @@ if(process.argv[2]){
   const source=JSON.parse(readFileSync(process.argv[2],'utf8'));
   const rows=new Map(source.rows.map(r=>[r.codigo,r]));
   assert.ok(c.productos.every(p=>rows.get(String(p.codigo))?.available===true));
+  if(source.idioma==='es'){
+    assert.equal(c.stockRevisado,source.stockRevisado);
+    assert.equal(c.categorias.length,21);
+    assert.ok(c.productos.every(p=>!/^[-\d]+%$/.test(p.marca||'')));
+    assert.ok(c.productos.every(p=>!(/\b(Feminino|Unissex|Preto|Branco|Cinza|Carregador|Cabelo|Suporte)\b/i.test(p.titulo))));
+    const iphoneCodes=[...rows.values()].filter(r=>r.available&&/\biPhone 18\b/i.test(r.titulo)).map(r=>r.codigo).sort();
+    assert.deepEqual(c.productos.filter(p=>/\biPhone 18\b/i.test(p.titulo)).map(p=>p.codigo).sort(),iphoneCodes);
+    for(const code of ['1219463','1204612'])if(rows.get(code)?.available===false)assert.ok(!c.productos.some(p=>p.codigo===code),'No publicar el iPhone agotado '+code);
+  }
   const iphone=c.productos.find(p=>/^Celular Apple iPhone 18\b/i.test(p.titulo));
   assert.ok(iphone,'El catálogo debe incluir los iPhone 18 de la fuente actual');
   assert.equal(iphone.precio.final_usd,Math.ceil(rows.get(String(iphone.codigo)).usd+70));

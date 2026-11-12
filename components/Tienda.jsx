@@ -36,6 +36,7 @@ export default function Tienda({catalogo}) {
   const [pMin,setPMin]=useState(''), [pMax,setPMax]=useState(''), [limit,setLimit]=useState(48), [homeTab,setHomeTab]=useState('novedades'),[brandTab,setBrandTab]=useState('KARMA');
   const catRef=useRef(null), sectionRef=useRef(null), inputRef=useRef(null);
   useEffect(()=>setLimit(48),[q,cat,orden,pMin,pMax,onlyFavorites]);
+  useEffect(()=>{if(onlyFavorites){setQ('');setCat('all');setPMin('');setPMax('');}},[onlyFavorites]);
   const tokens=norm(q).split(/\s+/).filter(Boolean);
   const filtrados=useMemo(()=>{
     let result=catalogo.productos.filter(p=>{
@@ -59,11 +60,11 @@ export default function Tienda({catalogo}) {
   },[catalogo.productos]);
   const homeProducts=(homeTab==='ofertas'?ofertas:homeTab==='seleccion'?seleccion:novedades.length?novedades:catalogo.productos).slice(0,10);
   const brandProducts=useMemo(()=>catalogo.productos.filter(p=>norm(p.marca)===norm(brandTab)).slice(0,8),[catalogo.productos,brandTab]);
-  const fecha=catalogo.generado?new Date(catalogo.generado).toLocaleDateString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'numeric',month:'long'}):null;
+  const fecha=(catalogo.stockRevisado||catalogo.generado)?new Date(catalogo.stockRevisado||catalogo.generado).toLocaleDateString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'numeric',month:'long'}):null;
   const scrollCatalog=()=>requestAnimationFrame(()=>catRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
   const explorar=(query='',category='all')=>{setOnlyFavorites(false);setQ(query);setCat(catalogo.categorias.some(c=>c.slug===category)?category:'all');setPMin('');setPMax('');scrollCatalog();};
   const showTab=tab=>{setHomeTab(tab);requestAnimationFrame(()=>sectionRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
-  const navCats=['TV y Video','Electrodomésticos','Celulares','Informática','Perfumes','Automóvil'].map(name=>catalogo.categorias.find(c=>c.nombre===name||name==='Celulares'&&c.nombre==='Celulares y SmartPhones')).filter(Boolean);
+  const navCats=['TV y Video','Electrodomésticos','Aire Acondicionado','Celulares','Informática','Perfumes','Automóvil'].map(name=>{if(name==='Aire Acondicionado'){const c=catalogo.categorias.find(c=>c.slug==='electrodomesticos');return c?{...c,nombre:name,emoji:'❄️',query:'aire acondicionado',navKey:'aire'}:null;}return catalogo.categorias.find(c=>c.nombre===name||name==='Celulares'&&c.nombre==='Celulares y SmartPhones');}).filter(Boolean);
 
   return <>
     <div className="storefront-tools"><div className="container storefront-tools-inner">
@@ -72,7 +73,7 @@ export default function Tienda({catalogo}) {
         <input ref={inputRef} type="search" aria-label="Buscar en el catálogo FVR" placeholder="Buscá productos, marcas o modelos…" value={q} onChange={e=>setQ(e.target.value)}/>{q?<button className="clear" aria-label="Limpiar búsqueda" onClick={()=>setQ('')}>×</button>:null}
       </div>
     </div></div>
-    <nav className="department-nav" aria-label="Categorías principales"><div className="container department-nav-inner"><button className="department-all" onClick={()=>{explorar();inputRef.current?.focus();}}>☰ <span>Todo el catálogo</span></button>{navCats.map(c=><button key={c.slug} className={cat===c.slug?'active':''} onClick={()=>explorar('',c.slug)}><span>{c.emoji}</span>{c.nombre}</button>)}</div></nav>
+    <nav className="department-nav" aria-label="Categorías principales"><div className="container department-nav-inner"><button className="department-all" onClick={()=>{explorar();inputRef.current?.focus();}}>☰ <span>Todo el catálogo</span></button>{navCats.map(c=><button key={c.navKey||c.slug} className={cat===c.slug?'active':''} onClick={()=>explorar(c.query||'',c.slug)}><span>{c.emoji}</span>{c.nombre}</button>)}</div></nav>
     {enHome&&<>
       <CampaignSlider onExplore={explorar}/>
       <div className="service-ribbon"><div className="container"><b>FVR · Importación internacional</b><span>Envíos a todo el país</span><span>Pagá en pesos al valor del USDT</span><span>Atención directa por WhatsApp</span></div></div>
@@ -94,7 +95,7 @@ export default function Tienda({catalogo}) {
         {onlyFavorites&&<div className="favorites-notice"><h2>Mis favoritos</h2><p>Guardados en este navegador. Se muestran los que están disponibles en el catálogo actual.</p><button onClick={()=>setOnlyFavorites(false)}>Volver al catálogo</button></div>}
         <div className="cats"><button className={`chip ${cat==='all'?'active':''}`} onClick={()=>setCat('all')}>Todo <span className="c">{catalogo.productos.length.toLocaleString('es-AR')}</span></button>{catalogo.categorias.map(c=><button key={c.slug} className={`chip ${cat===c.slug?'active':''}`} onClick={()=>setCat(c.slug)}>{c.emoji} {c.nombre} <span className="c">{c.cantidad.toLocaleString('es-AR')}</span></button>)}</div>
         <div className="toolbar"><select aria-label="Ordenar productos" className="tb-select" value={orden} onChange={e=>setOrden(e.target.value)}><option value="relevancia">Ordenar: Relevancia</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option></select><div className="tb-range"><input aria-label="Precio mínimo en dólares" className="tb-input" type="number" min="0" placeholder="Precio mín." value={pMin} onChange={e=>setPMin(e.target.value)}/><span className="tb-sep">—</span><input aria-label="Precio máximo en dólares" className="tb-input" type="number" min="0" placeholder="Precio máx." value={pMax} onChange={e=>setPMax(e.target.value)}/>{(pMin!==''||pMax!=='')&&<button className="tb-clear" onClick={()=>{setPMin('');setPMax('');}}>Limpiar</button>}</div></div>
-        <h2 className="section-title">{tokens.length?`Resultados para “${q}”`:cat==='all'?'Catálogo completo':catalogo.categorias.find(c=>c.slug===cat)?.nombre||'Productos'}</h2><div className="section-sub">{filtrados.length.toLocaleString('es-AR')} productos {(!enHome&&cat!=='all')?<button className="reset-catalogue" onClick={()=>explorar()}>Ver todo el catálogo</button>:null}</div>
+        <h2 className="section-title">{onlyFavorites?'Productos guardados':tokens.length?`Resultados para “${q}”`:cat==='all'?'Catálogo completo':catalogo.categorias.find(c=>c.slug===cat)?.nombre||'Productos'}</h2><div className="section-sub">{filtrados.length.toLocaleString('es-AR')} {filtrados.length===1?'producto':'productos'} {(!enHome&&cat!=='all')?<button className="reset-catalogue" onClick={()=>explorar()}>Ver todo el catálogo</button>:null}</div>
         {!filtrados.length?<div className="empty"><div className="big">⌕</div>No encontramos productos con ese criterio.<br/>Probá con otra palabra o ajustá los filtros.</div>:<><div className="grid">{filtrados.slice(0,limit).map(p=><Card key={p.codigo} p={p} rate={rate}/>)}</div>{filtrados.length>limit&&<div className="load-more-wrap"><button className="vermas" onClick={()=>setLimit(l=>l+48)}>Ver más productos <span>({(filtrados.length-limit).toLocaleString('es-AR')} más)</span></button></div>}</>}
       </section>
     </main>

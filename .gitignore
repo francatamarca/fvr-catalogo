@@ -13,6 +13,9 @@ captura-*.json
 madrid-ui-*.json
 catalogo-anterior-*.json
 madrid-chrome-profile/
+stock-es-*.json
+precios-altas-*.json
+stock-precios-*.json
 # Sí se publica la versión saneada (sin costo):
 !data/catalogo.public.json.gz
 

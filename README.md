@@ -4,10 +4,10 @@ Catálogo de Madrid Center con reglas de precio FVR, pedidos por WhatsApp y coti
 
 ## Actualización manual que funciona con la PC encendida
 
-El 12/11/2026 se leyó el catálogo desde los listados públicos visibles de Chrome: **13.355 filas de 21 categorías, equivalentes a 13.003 códigos únicos**. La lectura distingue disponibles y agotados y valida cada total de categoría. Ver [ACTUALIZACION-MANUAL.md](ACTUALIZACION-MANUAL.md).
+El 12/11/2026 a las 11:35 (Argentina) se completó una nueva revisión desde Chrome: **13.357 tarjetas observadas de 21 categorías, equivalentes a 13.005 códigos únicos**. La publicación FVR contiene **11.065 productos disponibles** luego de sus filtros. Se verificaron por separado los USD de 30 referencias sin precio anterior. La web distingue fecha de disponibilidad y fecha de precios de referencia. Ver [ACTUALIZACION-MANUAL.md](ACTUALIZACION-MANUAL.md).
 
 1. Leer los listados públicos completos en el navegador y guardar la captura fuera del repositorio.
-2. Ejecutar `node importar-captura-ui.mjs ruta/captura.json` y `node publish.mjs`.
+2. Conciliar nombres/stock ES con precios USD observados mediante `conciliar-stock-ui.mjs`. Ejecutar `node importar-captura-ui.mjs ruta/captura.json` y `node publish.mjs`.
 3. Guardar en Git únicamente el archivo saneado `data/catalogo.public.json.gz`, las campañas públicas y los cambios de código necesarios.
 4. Publicar en Vercel y comprobar fecha, cantidad, novedades, búsqueda, ficha y pedido en el dominio de producción.
 
@@ -22,6 +22,8 @@ La web renovada utiliza `/bff/main/api/v4/productos/buscar`; `sync.mjs` fue migr
 La portada y las fichas leen el snapshot saneado **incluido en su propio despliegue**. Ya no dependen de que una caché de GitHub Raw se actualice. `next.config.mjs` incluye el snapshot en las funciones de las fichas. `CATALOGO_URL` sólo habilita una fuente remota si se configura expresamente.
 
 Los pedidos guardados se revisan contra los precios y la disponibilidad de la publicación vigente: se conservan cantidades, se actualizan precios y se retiran SKU que ya no están publicados.
+
+La home usa los 16 logos de marcas de la referencia, campañas en español y departamentos con imágenes. Los favoritos se guardan localmente en el navegador, se conservan al recargar y filtran sólo productos vigentes; no requieren crear una cuenta. El botón flotante de WhatsApp usa un SVG para que su ícono sea consistente en celular.
 
 ## Campañas y diseño
 

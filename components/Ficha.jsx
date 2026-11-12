@@ -73,7 +73,7 @@ export default function Ficha({ p }) {
               {esGeneral ? 'Se calcula en tu pedido según el peso' : 'Incluido hasta tu ciudad ✓'}
             </span></div>
             <div className="row"><span className="k">Compra mínima</span><span className="v">US$ 250 por pedido</span></div>
-            <div className="row"><span className="k">Disponibilidad</span><span className="v" style={{ color: 'var(--green)' }}>En stock ✓</span></div>
+            <div className="row"><span className="k">Disponibilidad</span><span className="v" style={{ color: 'var(--green)' }}>Disponible en la última revisión ✓</span></div>
             {p.pesoKg ? <div className="row"><span className="k">Peso</span><span className="v">{p.pesoKg} kg</span></div> : null}
           </div>
 
