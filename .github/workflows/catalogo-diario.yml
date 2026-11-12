@@ -1,9 +1,6 @@
 name: Actualizar catálogo FVR
 
 on:
-  schedule:
-    - cron: '0 14 * * *'
-      timezone: America/Argentina/Buenos_Aires
   workflow_dispatch:
 
 permissions:

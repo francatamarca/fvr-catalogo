@@ -1,30 +1,41 @@
 # FVR Catálogo
 
-Web-catálogo que espeja el catálogo público de Madrid Center (Ciudad del Este, PY), con precios FVR en USDT y cotización en vivo. Incluye consulta directa por WhatsApp de FVR.
+Catálogo de Madrid Center con reglas de precio FVR, pedidos por WhatsApp y cotización USDT/ARS. La publicación contiene sólo precios de venta FVR.
 
-## Arquitectura
-- **Web:** Next.js en Vercel. Lee el catálogo público (saneado) desde GitHub y lo revalida cada 30 min.
-- **Sync (nube):** GitHub Actions está programado para ejecutar `sync.mjs --full` todos los días a las 14:00 de Argentina. La web actual usa `/bff/main/api/v4/productos/buscar`, por lo que el sincronizador fue migrado de v3 a v4. Usa el mismo filtro de stock para estadísticas y productos, y codifica el cursor con URLSearchParams. El 30/07/2026 se confirmó una sincronización completa de 10.194 productos desde la PC. Las pruebas HTTP actuales reciben 403 de Cloudflare y la migración todavía no pudo validarse con una descarga completa. Esto no demuestra que haga falta una clave o permiso oficial nuevo. El catálogo publicado conserva la fecha y los datos de la última sincronización correcta. La revisión automática del entorno rechazó continuar una sesión automatizada tras verificación humana, incluso con autorización de Francisco; ese método no se ejecutó.
-- **Publicación:** `publish.mjs` genera `data/catalogo.public.json.gz` **sin el precio de costo** (lo único que se sube a GitHub).
-- **Despliegue:** el cambio del archivo público activa el despliegue conectado de Vercel. La tarea valida la lectura completa y rechaza catálogos vacíos, incompletos o duplicados antes de reemplazar la versión publicada.
-- **Estado:** cada ejecución queda visible en la pestaña Actions del repositorio; los fallos no actualizan el catálogo y el sitio conserva la fecha de la última actualización correcta.
+## Actualización manual que funciona con la PC encendida
 
-## Actualización diaria
-La programación vive en `.github/workflows/catalogo-diario.yml` y está configurada para las 14:00 con la zona `America/Argentina/Buenos_Aires`; GitHub puede demorarla o dejarla en cola durante períodos de alta carga. El cron no garantiza una publicación correcta mientras la API rechace al runner. También se puede iniciar manualmente desde Actions → “Actualizar catálogo FVR” → “Run workflow”. El repositorio es público, por lo que GitHub documenta que no factura minutos de Actions en runners hospedados.
+El 12/11/2026 se leyó el catálogo desde los listados públicos visibles de Chrome: **13.355 filas de 21 categorías, equivalentes a 13.003 códigos únicos**. La lectura distingue disponibles y agotados y valida cada total de categoría. Ver [ACTUALIZACION-MANUAL.md](ACTUALIZACION-MANUAL.md).
 
-Manual:
-```
-node sync.mjs --full   # trae todo el catálogo disponible por API (menos comestibles)
-node publish.mjs        # valida y genera la versión pública saneada
-```
+1. Leer los listados públicos completos en el navegador y guardar la captura fuera del repositorio.
+2. Ejecutar `node importar-captura-ui.mjs ruta/captura.json` y `node publish.mjs`.
+3. Guardar en Git únicamente el archivo saneado `data/catalogo.public.json.gz`, las campañas públicas y los cambios de código necesarios.
+4. Publicar en Vercel y comprobar fecha, cantidad, novedades, búsqueda, ficha y pedido en el dominio de producción.
 
-## Reglas de precio (ajustables en config.mjs / pricing.mjs)
-- General: +35%; +25% para productos de más de US$1000 y menos de 10 kg. El envío nacional se calcula por peso con la tabla vigente de `data/envios.json`.
-- Notebooks/Tablets (fijo por unidad, envío incluido): <500→+110, 500-1000→+130, 1000-2000→+150, >2000→+200.
-- Celulares: +50 (Apple o >600 → +70).
-- En pedidos desde US$500: hasta 10 kg de envío bonificado. En pedidos desde US$1000, los artículos generales pasan de +35% a +25% (sin descuento doble en productos que ya tienen margen +25%).
-- Piso por categoría oculta productos que no le ganan a Argentina (notebooks <150, tablets <180, celus <60).
-- Reacondicionados: se muestran etiquetados.
+La fecha que muestra la web corresponde a la lectura del proveedor; volver a importar no cambia artificialmente esa fecha. Los pesos y las dimensiones conocidos se conservan por SKU. Los productos generales que no tienen datos de peso se muestran con **envío a confirmar**; no se supone que pesen 1 kg ni se promete envío gratis sobre ese supuesto.
 
-## Seguridad
-`data/catalogo.json` (con costo) está en `.gitignore` y NUNCA se sube. Solo se publica la versión saneada.
+## API
+
+La web renovada utiliza `/bff/main/api/v4/productos/buscar`; `sync.mjs` fue migrado de v3 a v4. Las consultas HTTP estándar actuales reciben 403 con un desafío de Cloudflare. Eso no demuestra que sea necesaria una clave oficial nueva. No se ejecutan técnicas de evasión ni se resuelven desafíos automáticamente. El flujo de GitHub queda disponible para ejecución manual; se retiró la programación diaria que no podía completar la descarga.
+
+## Publicación consistente
+
+La portada y las fichas leen el snapshot saneado **incluido en su propio despliegue**. Ya no dependen de que una caché de GitHub Raw se actualice. `next.config.mjs` incluye el snapshot en las funciones de las fichas. `CATALOGO_URL` sólo habilita una fuente remota si se configura expresamente.
+
+Los pedidos guardados se revisan contra los precios y la disponibilidad de la publicación vigente: se conservan cantidades, se actualizan precios y se retiran SKU que ya no están publicados.
+
+## Campañas y diseño
+
+`data/campanas.json` registra las campañas visibles del proveedor y sus fuentes. Las imágenes se guardan en `public/campanas/`. El carrusel y los accesos conducen a búsquedas dentro de FVR. No se usan campañas que exhiban costos del proveedor ni productos excluidos, como motos eléctricas.
+
+## Reglas de precio
+
+- General: +35%; +25% para productos de más de US$1000 con peso conocido inferior a 10 kg.
+- Notebooks y tablets: logística fija de +110, +130, +150 o +200 según el costo del producto.
+- Celulares: +50; Apple o costo mayor a US$600: +70.
+- Consolas PS5: logística fija de +110.
+- Compra mínima US$250. Envío bonificado desde US$500 sujeto al peso; margen por mayor desde US$1000 en artículos generales.
+- Se mantienen pisos de precio, etiquetas de reacondicionado, exclusiones especiales y límite de peso conocido de 60 kg.
+
+## Datos privados
+
+`data/catalogo.json`, las capturas del proveedor y sus respaldos contienen costos y nunca se suben. `publish.mjs` rechaza campos internos en la versión pública y escribe el gzip de forma atómica.

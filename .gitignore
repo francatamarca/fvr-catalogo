@@ -7,6 +7,12 @@ preview-*.png
 # El catálogo COMPLETO tiene el precio de costo de Paraguay: NUNCA subir a GitHub.
 data/catalogo.json
 data/sync-status.json
+data/catalogo.json.tmp
+data/sync-partial.json
+captura-*.json
+madrid-ui-*.json
+catalogo-anterior-*.json
+madrid-chrome-profile/
 # Sí se publica la versión saneada (sin costo):
 !data/catalogo.public.json.gz
 

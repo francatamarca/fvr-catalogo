@@ -5,7 +5,7 @@ import { useRate } from './RateContext';
 import { calcCarrito, mensajePedido, linkPedidoWhatsApp, COMPRA_MINIMA } from '../lib/cart';
 
 export default function Cart() {
-  const { items, count, setQty, quitar, vaciar, abierto, setAbierto, envios } = useCart();
+  const { items, count, setQty, quitar, vaciar, abierto, setAbierto, envios, pedidoActualizado } = useCart();
   const rate = useRate();
   const [copiado, setCopiado] = useState(false);
   const tot = calcCarrito(items, envios);
@@ -41,6 +41,7 @@ export default function Cart() {
               </div>
             ) : (
               <>
+                {pedidoActualizado && <div className="cart-hint">Tu pedido se ajustó a los precios y la disponibilidad del catálogo actual.</div>}
                 <div className="cart-items">
                   {items.map(it => (
                     <div className="cart-item" key={it.codigo}>
@@ -65,7 +66,7 @@ export default function Cart() {
                   {tot.descuento1000 > 0 && (
                     <div className="trow descuento"><span>🎉 Descuento pedido +US$1000</span><b>−US$ {tot.descuento1000.toLocaleString('es-AR')}</b></div>
                   )}
-                  {tot.subGen > 0 && <div className="trow"><span>Peso{tot.pesoEstimado ? ' aprox.' : ''}</span><b>{tot.peso.toLocaleString('es-AR')} kg</b></div>}
+                  {tot.subGen > 0 && <div className="trow"><span>Peso</span><b>{tot.pesoEstimado ? 'A confirmar' : `${tot.peso.toLocaleString('es-AR')} kg`}</b></div>}
                   <div className="trow"><span>Envío nacional</span><b style={{ color: tot.gratis || tot.subGen === 0 ? 'var(--green)' : tot.consultar ? 'var(--accent-dark)' : 'inherit' }}>{tot.envioTxt}</b></div>
                   {tot.descuentoEnvio > 0 && (
                     <div className="trow descuento"><span>🎁 Descuento en envío (10 kg gratis)</span><b>−US$ {tot.descuentoEnvio.toLocaleString('es-AR')}</b></div>
@@ -74,7 +75,7 @@ export default function Cart() {
                   {rate ? <div className="trow ars"><span>≈ en pesos hoy</span><span>${Math.round(tot.total * rate).toLocaleString('es-AR')}</span></div> : null}
                 </div>
 
-                {tot.subGen > 0 && (
+                {tot.subGen > 0 && !tot.consultar && (
                   <div className="beneficios">
                     {tot.falta500 > 0 ? (
                       <>

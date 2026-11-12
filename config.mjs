@@ -41,7 +41,7 @@ export const PESO_MAX_KG = 60;
 // Exclusiones especiales: productos que no se pueden traer aunque no declaren peso
 // (las motos eléctricas seguro superan los 60kg). Revisar más adelante si Francisco consigue ruta.
 export function esExcluidoEspecial(titulo = '', categoria = '') {
-  return /moto\w*\s+el[ée]ctric|autopropelid|scooter\s+el[ée]ctric/i.test(`${titulo} ${categoria}`);
+  return /moto\w*\s+el[ée]c?tric|autopropelid|scooter\s+el[ée]c?tric/i.test(`${titulo} ${categoria}`);
 }
 
 // Clasificador de categoría-hoja (español + portugués) -> grupo de display. Orden = prioridad.

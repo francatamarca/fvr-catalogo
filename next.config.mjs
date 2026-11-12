@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // asegura que el catálogo saneado local esté disponible como respaldo en runtime
+  // El snapshot de este despliegue debe estar disponible en todas las fichas.
   experimental: {
     outputFileTracingIncludes: {
       '/': ['./data/catalogo.public.json.gz'],

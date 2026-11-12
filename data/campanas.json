@@ -1,0 +1,12 @@
+{
+  "capturado": "2026-11-12",
+  "fuente": "Campañas visibles en https://madridcenterimportados.com/home",
+  "items": [
+    {"image":"iphone18","title":"iPhone 18 Pro y Pro Max","detail":"Conocé los modelos y precios FVR","q":"iphone 18","category":"celulares","sourceUrl":"https://dados.sfo3.cdn.digitaloceanspaces.com/banners/up07pGVndPPHI9gysK4iyCFnbklnmUB5SakWi7Bp.webp"},
+    {"image":"amazon","title":"El universo Amazon","detail":"Alexa, Echo y Fire TV para tu casa","q":"Amazon","sourceUrl":"https://dados.sfo3.cdn.digitaloceanspaces.com/banners/iREYQUxzdG58zpynG5x6eqLjduhdHNOOaijCeIu1.webp"},
+    {"image":"perfumes","title":"Perfumes que dejan huella","detail":"Explorá las marcas y fragancias del catálogo","category":"perfumes","sourceUrl":"https://dados.sfo3.cdn.digitaloceanspaces.com/banners/uHLP4CVtKNqMvXMrJis5I5K5vkwwhiERniZhtzlm.webp"},
+    {"image":"aire","title":"Climatización Smartfy","detail":"Elegí tu equipo y consultá el envío con FVR","q":"condicionado","category":"electrodomesticos","sourceUrl":"https://dados.sfo3.cdn.digitaloceanspaces.com/banners/VCQwIOyXWFqg6DD8n2cFXEr48ZZb3c7eNc9qwFTJ.webp"},
+    {"image":"karma","title":"Maison Karma","detail":"Una nueva colección para descubrir","q":"Karma","category":"perfumes","sourceUrl":"https://dados.sfo3.cdn.digitaloceanspaces.com/banners/GeE1IoJxxyJTIoMqgbo3XaIeC86mZLEZBUCa6kL6.webp"},
+    {"image":"tv","title":"Smart TV Smartfy","detail":"Entretenimiento para todos tus espacios","q":"Smartfy","category":"tv-y-video","sourceUrl":"https://dados.sfo3.cdn.digitaloceanspaces.com/banners/xF9SXC8U5pa5pvkmoTQG2lvbzRUUoOFbb9a7wxZI.webp"}
+  ]
+}

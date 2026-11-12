@@ -15,7 +15,7 @@ const OG = `${RAW}/app/opengraph-image.jpg`;
 export const metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://catalogo.fvrlogistica.com.ar'),
   title: 'FVR Logística Internacional — Catálogo de importación',
-  description: 'Catálogo de productos importados con envío a todo el país. Precios en USDT actualizados en tiempo real.',
+  description: 'Catálogo de productos importados con envío a todo el país. Precios en USDT y cotización del dólar en vivo.',
   icons: { icon: `${RAW}/app/icon.jpg`, apple: `${RAW}/app/icon.jpg` },
   openGraph: {
     title: 'FVR Logística Internacional — Catálogo de importación',
@@ -29,17 +29,20 @@ export const metadata = {
 };
 
 export default async function RootLayout({ children }) {
-  let actualizado = null, envios = null;
+  let actualizado = null, envios = null, vigentes = [];
   try {
     const c = await getCatalogo();
     if (c.generado) actualizado = new Date(c.generado).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
     envios = c.envios || null;
+    vigentes = c.productos.map(p => [String(p.codigo), p.precio.via,
+      p.precio.via === 'fija' ? p.precio.final_usd : p.precio.precio_unit_usd,
+      !!p.precio.m25, p.pesoKg??null, p.vol??null]);
   } catch {}
   return (
     <html lang="es">
       <body className={jakarta.className}>
         <RateProvider>
-          <CartProvider envios={envios}>
+          <CartProvider envios={envios} vigentes={vigentes}>
           <UsdtBar />
           <header className="top">
             <div className="container top-row">
