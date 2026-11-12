@@ -19,5 +19,5 @@ export function FavoriteButton({code,title,withText=false}) {
 }
 export function FavoritesHeaderButton(){
   const {codes,only,setOnly}=useFavorites(),router=useRouter(),pathname=usePathname();
-  return <button className="favorites-header" aria-label={`Ver favoritos (${codes.length})`} aria-pressed={only} onClick={()=>{setOnly(!only);if(pathname!=='/')router.push('/');window.scrollTo({top:0,behavior:'smooth'});}}><HeartIcon filled={only}/><span>Favoritos</span>{codes.length>0&&<b>{codes.length}</b>}</button>;
+  return <button className="favorites-header" aria-label={`Ver favoritos (${codes.length})`} aria-pressed={only} onClick={()=>{setOnly(pathname==='/'?!only:true);if(pathname!=='/')router.push('/');window.scrollTo({top:0,behavior:'smooth'});}}><HeartIcon filled={only}/><span>Favoritos</span>{codes.length>0&&<b>{codes.length}</b>}</button>;
 }
