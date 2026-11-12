@@ -86,9 +86,9 @@ export default function Cart() {
                       </>
                     ) : tot.falta1000 > 0 ? (
                       <>
-                        <div className="ben-done">✓ Envío bonificado conseguido</div>
-                        <div className="ben-bar"><div className="ben-fill" style={{ width: `${Math.min(100, (tot.subGen - 500) / 5)}%` }} /></div>
-                        <div className="ben-txt">💡 Sumá <b>US$ {tot.falta1000.toLocaleString('es-AR')}</b> más y todos tus productos pasan a <b>precio por mayor</b> 🎉</div>
+                        <div className="ben-done">✓ {tot.bonificacionPorIncluido ? 'Envío bonificado por producto con envío incluido' : 'Envío bonificado conseguido'}</div>
+                        <div className="ben-bar"><div className="ben-fill" style={{ width: `${Math.min(100, tot.subGen / 10)}%` }} /></div>
+                        <div className="ben-txt">💡 Sumá <b>US$ {tot.falta1000.toLocaleString('es-AR')}</b> en productos con envío separado para acceder al <b>precio por mayor</b> 🎉</div>
                       </>
                     ) : (
                       <div className="ben-done">🏆 ¡Beneficios máximos! Envío bonificado + precio por mayor aplicados.</div>

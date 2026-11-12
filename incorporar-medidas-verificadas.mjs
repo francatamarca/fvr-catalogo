@@ -11,7 +11,9 @@ for(const r of captura.productos){
   const w=r.texto.match(/Peso\s*([\d.]+)\s*kg/i);
   if(!d||!w)throw Error('Faltan medidas o peso en la evidencia de '+r.codigo);
   const medidas=d.slice(1).map(Number),peso=Number(w[1]),vol=Math.round(medidas.reduce((a,b)=>a*b,1));
-  if(medidas.some(v=>!(v>0))||!(peso>0)||peso!==p.pesoKg||Math.abs(vol-p.vol)>1)throw Error('Datos distintos a los guardados; revisar antes de importar '+r.codigo);
+  if(medidas.some(v=>!(v>0))||!(peso>0)||peso>60||(p.pesoKg!=null&&peso!==p.pesoKg)||(p.vol!=null&&Math.abs(vol-p.vol)>1))throw Error('Datos distintos a los guardados; revisar antes de importar '+r.codigo);
+  if(p.pesoKg==null&&p.precio.via!=='fija')throw Error('Peso nuevo de un general: revisar primero su regla de precio '+r.codigo);
+  p.pesoKg=peso;p.vol=vol;
   p.medidasCm=medidas;p.medidasRevisadas=captura.capturado;
 }
 await fs.writeFile('data/catalogo.json.tmp',JSON.stringify(c));
