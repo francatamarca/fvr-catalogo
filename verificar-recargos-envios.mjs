@@ -7,6 +7,8 @@ import {calcCarrito,mensajePedido} from './lib/cart.js';
 for(const [s,n] of [['65999.99',65999.99],['65.999,99',65999.99],['$30.000',30000],['30000',30000],['124999.99',124999.99],['',null]])assert.equal(importeARS(s),n);
 const quote=leerCotizacion('ENTREGA DOMICILIO\nHasta 50kg\nValor\n$65999.99\nENTREGA AGENCIA\nValor\n$52000');
 assert.deepEqual(quote,{dom:65999.99,suc:52000});
+assert.deepEqual(leerCotizacion('ENTREGA DOMICILIO\nNo disponible\nProducto\nENTREGA AGENCIA\n$52000'),{dom:null,suc:52000});
+assert.deepEqual(leerCotizacion('ENTREGA AGENCIA\n$52000'),{dom:null,suc:52000});
 assert.equal(tarifaUSD(quote.dom,quote.suc,1668.15),45);
 assert.equal(tarifaUSD(null,52000,1668.15),42);
 assert.throws(()=>tarifaUSD(null,null,1668.15));
