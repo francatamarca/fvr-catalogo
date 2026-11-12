@@ -50,6 +50,8 @@ export default function Tienda({ catalogo }) {
   const [pMax, setPMax] = useState('');
   const [limit, setLimit] = useState(48);
   const catRef = useRef(null);
+  const novedadesRef = useRef(null);
+  const ofertasRef = useRef(null);
   useEffect(() => { setLimit(48); }, [q, cat, orden, pMin, pMax]);
 
   const tokens = norm(q).split(/\s+/).filter(Boolean);
@@ -74,35 +76,61 @@ export default function Tienda({ catalogo }) {
   const enHome = !buscando && cat === 'all' && pMin === '' && pMax === '';
   const ofertas = enHome ? catalogo.productos.filter(p => p.descuento) : [];
   const novedades = enHome ? catalogo.productos.filter(p => p.esNuevo) : [];
+  const destacada = novedades[0] || ofertas[0] || catalogo.productos[0];
+  const precioDestacada = destacada ? priceView(destacada) : null;
+  const categoriasHome = catalogo.categorias.slice(0, 8).map(c => ({
+    ...c,
+    imagen: catalogo.productos.find(p => p.catSlug === c.slug && p.img)?.img,
+  }));
+  const marcasHome = [...catalogo.productos.reduce((map, p) => {
+    if (p.marca) map.set(p.marca, (map.get(p.marca) || 0) + 1);
+    return map;
+  }, new Map())].sort((a, b) => b[1] - a[1]).slice(0, 12);
 
   const irACategoria = (slug) => {
     setCat(slug);
     requestAnimationFrame(() => catRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   };
 
+  const irASeccion = ref => ref.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
   return (
     <>
       {enHome && (
-        <div className="hero">
-          <div className="container hero-grid">
-            <div>
-              <span className="hero-pill">✈️ Por FVR Logística Internacional</span>
-              <h1>Productos <em>importados</em>,<br />precio final <em>por unidad</em></h1>
-              <p>Elegí tus productos, armá tu pedido y envialo por WhatsApp. El envío nacional se calcula solo, según el peso.</p>
-              <div className="hero-marks">
-                <span className="mark"><i>🚚</i><b>Envío a todo el país</b><small>llega hasta tu ciudad</small></span>
-                <span className="mark"><i>🎁</i><b>Envío gratis +US$500</b><small>hasta 10 kg de pedido</small></span>
-                <span className="mark"><i>💵</i><b>Pagá en pesos</b><small>al valor del USDT del día</small></span>
-                <span className="mark"><i>📦</i><b>{catalogo.productos.length.toLocaleString('es-AR')} productos</b><small>de stock real</small></span>
-                <span className="mark"><i>🛒</i><b>Compra mínima US$250</b><small>por pedido</small></span>
-                <span className="mark destacado"><i>🎉</i><b>Pedidos +US$1000</b><small>precio por mayor: −10% en tus productos</small></span>
+        <div className="home-intro">
+          <div className="container">
+            <section className="campaign-hero">
+              <div className="campaign-copy">
+                <span className="campaign-kicker"><i /> Selección FVR · importación internacional</span>
+                <h1>Lo nuevo del mundo,<br /><em>más cerca de vos.</em></h1>
+                <p>Explorá miles de productos importados con precio final por unidad. Armá tu pedido y coordinamos el envío a tu ciudad.</p>
+                <div className="campaign-actions">
+                  <button className="campaign-primary" onClick={() => irASeccion(novedadesRef)}>Ver novedades <span>↗</span></button>
+                  <button className="campaign-secondary" onClick={() => irASeccion(catRef)}>Explorar catálogo <span>↓</span></button>
+                </div>
+                <div className="campaign-proof">
+                  <span><b>{catalogo.productos.length.toLocaleString('es-AR')}</b> productos disponibles</span>
+                  <span>Envíos a todo el país</span>
+                  <span>Atención directa por WhatsApp</span>
+                </div>
               </div>
-            </div>
-            <div className="hero-visual">
-              <div className="hero-logo-card">
-                <img src="https://raw.githubusercontent.com/francatamarca/fvr-catalogo/main/public/logo-fvr.jpg" alt="FVR" />
+              <div className="campaign-product">
+                <div className="campaign-orbit orbit-one" /><div className="campaign-orbit orbit-two" />
+                {destacada?.img ? <img src={destacada.img} alt={destacada.titulo} /> : <img src="/logo-fvr.jpg" alt="FVR Logística Internacional" />}
+                <div className="campaign-product-label">
+                  <span>{destacada?.esNuevo ? 'RECIÉN INGRESADO' : destacada?.descuento ? 'PRECIO ESPECIAL' : 'DESTACADO FVR'}</span>
+                  <b>{destacada?.titulo || 'Productos importados para todo el país'}</b>
+                  {precioDestacada && <strong>US$ {Number(precioDestacada.main).toLocaleString('es-AR')}{precioDestacada.unit ? ` ${precioDestacada.unit}` : ''}</strong>}
+                </div>
+                <span className="campaign-sticker">Importación<br />con respaldo</span>
               </div>
-            </div>
+            </section>
+
+            <nav className="home-shortcuts" aria-label="Explorar catálogo">
+              <button onClick={() => irASeccion(novedadesRef)}><span className="shortcut-icon fresh">✦</span><span><b>Recién llegados</b><small>Lo nuevo esta semana</small></span><i>↗</i></button>
+              <button onClick={() => irASeccion(ofertasRef)}><span className="shortcut-icon deals">%</span><span><b>Ofertas activas</b><small>Encontrá tu oportunidad</small></span><i>↗</i></button>
+              <button onClick={() => irASeccion(catRef)}><span className="shortcut-icon allcat">⌕</span><span><b>Todo el catálogo</b><small>Buscá entre categorías</small></span><i>↗</i></button>
+            </nav>
           </div>
         </div>
       )}
@@ -122,37 +150,42 @@ export default function Tienda({ catalogo }) {
 
         {enHome && (
           <>
-            <div className="section-title">Explorá por categoría</div>
-            <div className="catgrid">
-              {catalogo.categorias.map(c => (
-                <button key={c.slug} className="cattile" onClick={() => irACategoria(c.slug)}>
-                  <span className="em">{c.emoji}</span>
-                  <span className="nm">{c.nombre}</span>
-                  <span className="ct">{c.cantidad.toLocaleString('es-AR')} productos</span>
+            <div className="home-section-head"><div><span className="eyebrow">ENCONTRÁ LO QUE BUSCÁS</span><div className="section-title">Explorá por categoría</div></div><span className="section-link">{catalogo.categorias.length} categorías</span></div>
+            <div className="category-showcase">
+              {categoriasHome.map((c, i) => (
+                <button key={c.slug} className={`category-feature category-feature-${i + 1}`} onClick={() => irACategoria(c.slug)}>
+                  {c.imagen && <img src={c.imagen} alt="" loading="lazy" />}
+                  <span className="category-shade" />
+                  <span className="category-copy"><i>{c.emoji}</i><b>{c.nombre}</b><small>{c.cantidad.toLocaleString('es-AR')} productos</small></span>
+                  <span className="category-arrow">↗</span>
                 </button>
               ))}
+            </div>
+            <div className="brand-strip">
+              <span className="brand-strip-label">MARCAS PARA ELEGIR</span>
+              <div className="brand-pills">{marcasHome.map(([marca]) => <button key={marca} onClick={() => { setQ(marca); requestAnimationFrame(() => irASeccion(catRef)); }}>{marca}</button>)}</div>
             </div>
           </>
         )}
 
         {novedades.length > 0 && (
-          <>
-            <div className="section-title">✨ Novedades de la semana</div>
+          <section ref={novedadesRef} className="home-product-section">
+            <div className="home-section-head"><div><span className="eyebrow">ACTUALIZADO DESDE EL CATÁLOGO DEL PROVEEDOR</span><div className="section-title">✨ Novedades de la semana</div></div><button className="section-link-btn" onClick={() => irASeccion(catRef)}>Ver catálogo completo ↗</button></div>
             <div className="section-sub">Productos que acaban de entrar en stock, detectados automáticamente.</div>
-            <div className="grid">
+            <div className="grid home-product-grid">
               {novedades.slice(0, 10).map(p => <Card key={p.codigo} p={p} rate={rate} />)}
             </div>
-          </>
+          </section>
         )}
 
         {ofertas.length > 0 && (
-          <>
-            <div className="section-title">🔥 Ofertas de la semana</div>
+          <section ref={ofertasRef} className="home-product-section deals-section">
+            <div className="home-section-head"><div><span className="eyebrow">OPORTUNIDADES POR TIEMPO LIMITADO</span><div className="section-title">🔥 Ofertas de la semana</div></div><button className="section-link-btn" onClick={() => irASeccion(catRef)}>Ver catálogo completo ↗</button></div>
             <div className="section-sub">Los descuentos vigentes del proveedor, ya con tu precio final calculado.</div>
-            <div className="grid">
+            <div className="grid home-product-grid">
               {ofertas.slice(0, 10).map(p => <Card key={p.codigo} p={p} rate={rate} />)}
             </div>
-          </>
+          </section>
         )}
 
         <div ref={catRef} style={{ scrollMarginTop: 130 }}>

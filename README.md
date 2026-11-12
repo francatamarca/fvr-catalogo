@@ -4,13 +4,13 @@ Web-catálogo que espeja el catálogo público de Madrid Center (Ciudad del Este
 
 ## Arquitectura
 - **Web:** Next.js en Vercel. Lee el catálogo público (saneado) desde GitHub y lo revalida cada 30 min.
-- **Sync (nube):** GitHub Actions ejecuta `sync.mjs --full` todos los días a las 14:00 de Argentina (17:00 UTC), sin depender de la PC. Consulta la API pública con HTTP estándar; si Madrid Center limita o bloquea el acceso, corta y conserva la última publicación. No resuelve desafíos ni evita controles de acceso.
+- **Sync (nube):** GitHub Actions está programado para ejecutar `sync.mjs --full` todos los días a las 14:00 de Argentina. El 30/07/2026 se confirmó una sincronización completa con 10.194 productos desde la PC. El proveedor respondió HTTP 403 a las consultas HTTP estándar de este entorno, y no hay ejecuciones registradas del flujo de GitHub en esta configuración. Hasta que Madrid Center habilite una vía oficial de automatización (por ejemplo, credenciales de API o permiso de acceso para el runner), cada intento se detendrá y conservará la última publicación; no se resolverán ni eludirán sus controles anti-bots.
 - **Publicación:** `publish.mjs` genera `data/catalogo.public.json.gz` **sin el precio de costo** (lo único que se sube a GitHub).
 - **Despliegue:** el cambio del archivo público activa el despliegue conectado de Vercel. La tarea valida la lectura completa y rechaza catálogos vacíos, incompletos o duplicados antes de reemplazar la versión publicada.
 - **Estado:** cada ejecución queda visible en la pestaña Actions del repositorio; los fallos no actualizan el catálogo y el sitio conserva la fecha de la última actualización correcta.
 
 ## Actualización diaria
-La programación vive en `.github/workflows/catalogo-diario.yml` y corre en los servidores de GitHub aunque la PC esté apagada. Está configurada para las 14:00 con la zona `America/Argentina/Buenos_Aires`; GitHub puede demorarla o dejarla en cola durante períodos de alta carga. También se puede iniciar manualmente desde Actions → “Actualizar catálogo FVR” → “Run workflow”. El repositorio es público, por lo que GitHub documenta que no factura minutos de Actions en runners hospedados.
+La programación vive en `.github/workflows/catalogo-diario.yml` y está configurada para las 14:00 con la zona `America/Argentina/Buenos_Aires`; GitHub puede demorarla o dejarla en cola durante períodos de alta carga. El cron no garantiza una publicación correcta mientras la API rechace al runner. También se puede iniciar manualmente desde Actions → “Actualizar catálogo FVR” → “Run workflow”. El repositorio es público, por lo que GitHub documenta que no factura minutos de Actions en runners hospedados.
 
 Manual:
 ```
