@@ -52,3 +52,11 @@ Las tarifas de envío guardadas en `data/envios.json` tienen su propia fecha. Un
 Un producto con tarifa fija cuyo peso real conocido y peso para envío sean menores a10kg habilita10kg bonificados para agregar generales, aunque éstos no lleguen a500USD. Se suma el peso de sus unidades al de los generales; hasta10kg total gratis y, sobre10kg, diferencia entre el tramo total y el tramo10kg. Fijos de10kg o más conservan su envío incluido y no habilitan este beneficio. Sin peso conocido, no asumir que califica.
 
 Si los generales ya alcanzan500USD, se conserva su beneficio anterior y su peso se calcula aparte de los productos con logística fija. Así la regla nueva nunca quita una bonificación ya obtenida. El mayorista1000USD sigue contando únicamente generales. Los límites de volumen, peso y datos faltantes permanecen. Probar con `node verificar-envio-incluido-combinado.mjs`.
+
+## Paginación y regreso al listado (15/11/2026)
+
+El listado muestra48productos por página, con controles arriba y abajo, primera/última, números con elipsis y salto directo. Estado público en query: `pagina`, `q`, `categoria`, `orden`, `min`, `max`, `favoritos`, `catalogo`, `pestana`, `marcaInicio`. Cambiar filtros reinicia página1. Cambiar de página agrega historial; escribir/filtros reemplaza la entrada actual. Se conserva la portada estática; la sincronización de query ocurre en cliente, sin consultar otra vez el proveedor.
+
+Las tarjetas envían `volver` con la URL interna normalizada; la ficha valida ese destino y usa `scroll={false}` al regresar. Antes de abrir una ficha se guarda en `sessionStorage` la tarjeta, su posición en pantalla y scroll por URL (máximo25vistas). El regreso o Atrás reconstruye filtros/página y restaura la misma tarjeta, con cancelación si el cliente comienza a desplazarse. Los favoritos esperan a cargar sus códigos antes de ajustar la última página.
+
+Ejecutar `node verificar-paginacion.mjs` y probar en navegador página1/última/salto, filtros y regreso por enlace/Atrás, favoritos tras recargar y al eliminar el último resultado, URL fuera de rango y móvil. Con11065productos existen231páginas; la última contiene25. No cambia catálogo, precios, stock, envío ni pedido.

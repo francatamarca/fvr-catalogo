@@ -7,7 +7,7 @@ import { priceView, ars, notaEnvio } from '../lib/format';
 import {FavoriteButton} from './FavoritesContext';
 import {COMPRA_MINIMA} from '../lib/cart';
 
-export default function Ficha({ p }) {
+export default function Ficha({ p,volver='/' }) {
   const rate = useRate();
   const { agregar, envios } = useCart();
   const pv = priceView(p,envios);
@@ -28,7 +28,7 @@ export default function Ficha({ p }) {
 
   return (
     <div className="container">
-      <Link href="/" className="back">← Volver al catálogo</Link>
+      <Link href={volver} scroll={false} className="back">← Volver al catálogo</Link>
       <div className="pd">
         <div>
           <div className="gallery">

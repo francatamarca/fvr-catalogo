@@ -2,6 +2,7 @@
 import {createContext,useContext,useEffect,useState} from 'react';
 import {useRouter,usePathname} from 'next/navigation';
 import {HeartIcon} from './Icons';
+import {CATALOG_NAV_EVENT} from './useCatalogNavigation';
 const FavoritesContext=createContext(null);
 const KEY='fvr-favoritos-v1';
 export const useFavorites=()=>useContext(FavoritesContext);
@@ -11,7 +12,7 @@ export function FavoritesProvider({children}) {
   useEffect(()=>{if(ready)try{localStorage.setItem(KEY,JSON.stringify(codes));}catch{}},[codes,ready]);
   useEffect(()=>{const listener=e=>{if(e.key===KEY)try{const v=JSON.parse(e.newValue||'[]');if(Array.isArray(v))setCodes(v.filter(x=>/^\d+$/.test(String(x))).map(String));}catch{}};window.addEventListener('storage',listener);return()=>window.removeEventListener('storage',listener);},[]);
   const toggle=code=>setCodes(v=>v.includes(String(code))?v.filter(x=>x!==String(code)):[...v,String(code)]);
-  return <FavoritesContext.Provider value={{codes,toggle,only,setOnly}}>{children}</FavoritesContext.Provider>;
+  return <FavoritesContext.Provider value={{codes,toggle,only,setOnly,ready}}>{children}</FavoritesContext.Provider>;
 }
 export function FavoriteButton({code,title,withText=false}) {
   const {codes,toggle}=useFavorites(),active=codes.includes(String(code));
@@ -19,5 +20,5 @@ export function FavoriteButton({code,title,withText=false}) {
 }
 export function FavoritesHeaderButton(){
   const {codes,only,setOnly}=useFavorites(),router=useRouter(),pathname=usePathname();
-  return <button className="favorites-header" aria-label={`Ver favoritos (${codes.length})`} aria-pressed={only} onClick={()=>{setOnly(pathname==='/'?!only:true);if(pathname!=='/')router.push('/');window.scrollTo({top:0,behavior:'smooth'});}}><HeartIcon filled={only}/><span>Favoritos</span>{codes.length>0&&<b>{codes.length}</b>}</button>;
+  return <button className="favorites-header" aria-label={`Ver favoritos (${codes.length})`} aria-pressed={only} onClick={()=>{const next=pathname==='/'?!only:true,href=next?'/?favoritos=1&catalogo=1':'/?catalogo=1';setOnly(next);if(pathname==='/'){window.history.pushState(null,'',href);window.dispatchEvent(new Event(CATALOG_NAV_EVENT));}else router.push(href,{scroll:false});}}><HeartIcon filled={only}/><span>Favoritos</span>{codes.length>0&&<b>{codes.length}</b>}</button>;
 }

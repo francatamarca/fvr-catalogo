@@ -8,19 +8,24 @@ import CampaignSlider from './CampaignSlider';
 import {BrandGallery,CategoryGallery} from './HomeSections';
 import {useFavorites,FavoriteButton} from './FavoritesContext';
 import {COMPRA_MINIMA} from '../lib/cart';
+import {PRODUCTOS_POR_PAGINA,urlVista} from '../lib/catalogo-navegacion';
+import {guardarPosicion,useCatalogNavigation} from './useCatalogNavigation';
+import CatalogPagination from './CatalogPagination';
 
 const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 const precioDe=p=>p.precio.via==='fija'?p.precio.final_usd:p.precio.precio_unit_usd;
 
-function Card({p,rate}) {
+function Card({p,rate,returnHref='/',group='catalogo'}) {
   const {agregar,envios}=useCart(), pv=priceView(p,envios);
-  return <article className="card">
+  const anchorId=`${group}-${p.codigo}`,productHref=`/producto/${p.codigo}?volver=${encodeURIComponent(returnHref)}`;
+  const remember=()=>guardarPosicion(returnHref,anchorId);
+  return <article className="card" id={anchorId}>
     <div className="imgwrap"><div className="badges">
       {p.descuento?<span className="badge desc">-{Math.round(p.descuento)}%</span>:null}
       {p.reacond?<span className="badge reacond">Reacond.</span>:null}
       {p.repuesto?<span className="badge repuesto">Repuesto</span>:p.esNuevo?<span className="badge new">Nuevo</span>:null}
-    </div><Link href={`/producto/${p.codigo}`} aria-label={`Ver ${p.titulo}`}>{p.img?<img src={p.img} alt={p.titulo} loading="lazy"/>:<span className="no-image">Sin imagen</span>}</Link><FavoriteButton code={p.codigo} title={p.titulo}/></div>
-    <div className="body"><div className="brand">{p.marca}</div><Link href={`/producto/${p.codigo}`} className="title">{p.titulo}</Link>
+    </div><Link href={productHref} onClick={remember} aria-label={`Ver ${p.titulo}`}>{p.img?<img src={p.img} alt={p.titulo} loading="lazy"/>:<span className="no-image">Sin imagen</span>}</Link><FavoriteButton code={p.codigo} title={p.titulo}/></div>
+    <div className="body"><div className="brand">{p.marca}</div><Link href={productHref} onClick={remember} className="title">{p.titulo}</Link>
       <div className="priceblock">{pv.old?<div className="price-old">US$ {Number(pv.old).toLocaleString('es-AR')} <span className="tag-mayor">Precio por mayor desde US$1.000</span></div>:null}
         <div className="price"><span className="cur">US$</span>{Number(pv.main).toLocaleString('es-AR')}{pv.unit?<span className="u"> {pv.unit}</span>:null}</div>
         {rate?<div className="price-ars">{ars(pv.main,rate)}</div>:null}<div className={`ship-note ${pv.noteClass}`}>{pv.note}</div>
@@ -32,14 +37,17 @@ function Card({p,rate}) {
 
 export default function Tienda({catalogo}) {
   const rate=useRate();
-  const {codes:favoriteCodes,only:onlyFavorites,setOnly:setOnlyFavorites}=useFavorites();
-  const [q,setQ]=useState(''), [cat,setCat]=useState('all'), [orden,setOrden]=useState('relevancia');
-  const [pMin,setPMin]=useState(''), [pMax,setPMax]=useState(''), [limit,setLimit]=useState(48), [homeTab,setHomeTab]=useState('novedades'),[brandTab,setBrandTab]=useState('KARMA');
+  const {codes:favoriteCodes,setOnly,ready:favoritesReady}=useFavorites();
   const [menuOpen,setMenuOpen]=useState(false);
   const menuRef=useRef(null),menuButtonRef=useRef(null);
   const catRef=useRef(null), sectionRef=useRef(null), inputRef=useRef(null);
-  useEffect(()=>setLimit(48),[q,cat,orden,pMin,pMax,onlyFavorites]);
-  useEffect(()=>{if(onlyFavorites){setQ('');setCat('all');setPMin('');setPMax('');}},[onlyFavorites]);
+  const {view,change,ready}=useCatalogNavigation(catRef);
+  const {q,cat,orden,pMin,pMax,homeTab,brandTab,favoritos:onlyFavorites}=view;
+  const filter=patch=>change({...patch,pagina:1,catalogo:true});
+  const setQ=q=>filter({q}),setCat=cat=>filter({cat}),setOrden=orden=>filter({orden}),setPMin=pMin=>filter({pMin}),setPMax=pMax=>filter({pMax});
+  const setOnlyFavorites=favoritos=>change({favoritos,pagina:1,catalogo:true},{scroll:'section',push:true});
+  const setBrandTab=brandTab=>change({brandTab});
+  useEffect(()=>{if(ready)setOnly(onlyFavorites);},[ready,onlyFavorites,setOnly]);
   useEffect(()=>{
     if(!menuOpen)return;
     const outside=e=>{if(!menuRef.current?.contains(e.target))setMenuOpen(false);};
@@ -60,7 +68,17 @@ export default function Tienda({catalogo}) {
     if(orden==='mayor')result=[...result].sort((a,b)=>precioDe(b)-precioDe(a));
     return result;
   },[catalogo.productos,cat,q,orden,pMin,pMax,onlyFavorites,favoriteCodes]);
-  const enHome=!onlyFavorites&&!tokens.length&&cat==='all'&&pMin===''&&pMax==='';
+  const totalPages=Math.max(1,Math.ceil(filtrados.length/PRODUCTOS_POR_PAGINA));
+  const page=Math.min(view.pagina,totalPages),start=(page-1)*PRODUCTOS_POR_PAGINA;
+  const returnHref=urlVista({...view,pagina:page});
+  useEffect(()=>{
+    if(!ready||(onlyFavorites&&!favoritesReady))return;
+    if(cat!=='all'&&!catalogo.categorias.some(c=>c.slug===cat))change({cat:'all',pagina:1});
+    else if(view.pagina!==page)change({pagina:page});
+  },[ready,favoritesReady,cat,view.pagina,page,onlyFavorites]);
+  const goPage=pagina=>change({pagina,catalogo:true},{push:true,scroll:'section'});
+  const pagination=position=><CatalogPagination page={page} totalPages={totalPages} total={filtrados.length} start={start+1} end={Math.min(start+PRODUCTOS_POR_PAGINA,filtrados.length)} onChange={goPage} position={position}/>;
+  const enHome=!onlyFavorites&&!view.catalogo&&page===1&&!tokens.length&&cat==='all'&&orden==='relevancia'&&pMin===''&&pMax==='';
   const novedades=useMemo(()=>catalogo.productos.filter(p=>p.esNuevo),[catalogo.productos]);
   const ofertas=useMemo(()=>catalogo.productos.filter(p=>p.descuento),[catalogo.productos]);
   const seleccion=useMemo(()=>{
@@ -71,9 +89,9 @@ export default function Tienda({catalogo}) {
   const homeProducts=(homeTab==='ofertas'?ofertas:homeTab==='seleccion'?seleccion:novedades.length?novedades:catalogo.productos).slice(0,10);
   const brandProducts=useMemo(()=>catalogo.productos.filter(p=>norm(p.marca)===norm(brandTab)).slice(0,8),[catalogo.productos,brandTab]);
   const fecha=(catalogo.stockRevisado||catalogo.generado)?new Date(catalogo.stockRevisado||catalogo.generado).toLocaleDateString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'numeric',month:'long'}):null;
-  const scrollCatalog=()=>requestAnimationFrame(()=>catRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));
-  const explorar=(query='',category='all')=>{setMenuOpen(false);setOnlyFavorites(false);setQ(query);setCat(catalogo.categorias.some(c=>c.slug===category)?category:'all');setPMin('');setPMax('');scrollCatalog();};
-  const showTab=tab=>{setHomeTab(tab);requestAnimationFrame(()=>sectionRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
+  const scrollCatalog=()=>change({pagina:1,catalogo:true},{push:true,scroll:'section'});
+  const explorar=(query='',category='all')=>{setMenuOpen(false);change({favoritos:false,q:query,cat:catalogo.categorias.some(c=>c.slug===category)?category:'all',pMin:'',pMax:'',pagina:1,catalogo:true},{push:true,scroll:'section'});};
+  const showTab=homeTab=>{change({homeTab});requestAnimationFrame(()=>sectionRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
   const navCats=['TV y Video','Electrodomésticos','Aire Acondicionado','Celulares','Informática','Perfumes','Automóvil'].map(name=>{if(name==='Aire Acondicionado'){const c=catalogo.categorias.find(c=>c.slug==='electrodomesticos');return c?{...c,nombre:name,emoji:'❄️',query:'aire acondicionado',navKey:'aire'}:null;}return catalogo.categorias.find(c=>c.nombre===name||name==='Celulares'&&c.nombre==='Celulares y SmartPhones');}).filter(Boolean);
 
   return <>
@@ -99,24 +117,24 @@ export default function Tienda({catalogo}) {
         <section className="container home-product-section" ref={sectionRef}>
           <div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Selecciones del catálogo"><button role="tab" aria-selected={homeTab==='novedades'} onClick={()=>showTab('novedades')}>Novedades <span>{novedades.length.toLocaleString('es-AR')}</span></button><button role="tab" aria-selected={homeTab==='ofertas'} onClick={()=>showTab('ofertas')}>Ofertas</button><button role="tab" aria-selected={homeTab==='seleccion'} onClick={()=>showTab('seleccion')}>Selección FVR</button></div><button className="section-link-btn" onClick={scrollCatalog}>Ver todo ↗</button></div>
           <p className="market-section-description">{homeTab==='novedades'?'Productos incorporados en la última actualización del catálogo.':homeTab==='ofertas'?'Oportunidades del proveedor, con tu precio FVR calculado.':'Una selección de tecnología, audio y marcas para descubrir.'}</p>
-          {homeProducts.length?<div className="grid home-product-grid">{homeProducts.map(p=><Card key={p.codigo} p={p} rate={rate}/>)}</div>:<div className="empty">No hay ofertas publicadas en esta actualización.</div>}
+          {homeProducts.length?<div className="grid home-product-grid">{homeProducts.map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref} group="inicio"/>)}</div>:<div className="empty">No hay ofertas publicadas en esta actualización.</div>}
         </section>
         <div className="container feature-promos"><button onClick={()=>explorar('Karma','perfumes')}><img src="/campanas/karma.webp" alt="Descubrí la colección Maison Karma" loading="lazy"/><span>Maison Karma <b>Ver fragancias ↗</b></span></button><button onClick={()=>explorar('Smartfy','tv-y-video')}><img src="/campanas/tv.webp" alt="Smart TV Smartfy" loading="lazy"/><span>Tu próximo Smart TV <b>Ver modelos ↗</b></span></button></div>
         <BrandGallery onExplore={explorar}/>
-        <section className="container brand-products-section"><div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Productos por marca">{['KARMA','SMARTFY','MIDEA','COBY','MT HELMETS'].map(b=><button key={b} role="tab" aria-selected={brandTab===b} onClick={()=>setBrandTab(b)}>{b}</button>)}</div><button className="section-link-btn" onClick={()=>explorar(brandTab)}>Ver más +</button></div><div className="grid home-product-grid">{brandProducts.map(p=><Card key={p.codigo} p={p} rate={rate}/>)}</div></section>
+        <section className="container brand-products-section"><div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Productos por marca">{['KARMA','SMARTFY','MIDEA','COBY','MT HELMETS'].map(b=><button key={b} role="tab" aria-selected={brandTab===b} onClick={()=>setBrandTab(b)}>{b}</button>)}</div><button className="section-link-btn" onClick={()=>explorar(brandTab)}>Ver más +</button></div><div className="grid home-product-grid">{brandProducts.map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref} group="marca-inicio"/>)}</div></section>
         <CategoryGallery categories={catalogo.categorias} products={catalogo.productos} onExplore={explorar}/>
         <div className="container"><div className="buying-strip"><div><b>Armá tu pedido, nosotros te acompañamos.</b><p>Compra mínima US$ {COMPRA_MINIMA} · Precios en USDT · Consultá el envío en tu pedido.</p></div><a href="https://wa.me/543883372745" target="_blank" rel="noreferrer">Hablar con FVR ↗</a></div></div>
       </>}
       <section ref={catRef} className="container catalogue-results" aria-label="Productos del catálogo">
         {onlyFavorites&&<div className="favorites-notice"><h2>Mis favoritos</h2><p>Guardados en este navegador. Se muestran los que están disponibles en el catálogo actual.</p><button onClick={()=>setOnlyFavorites(false)}>Volver al catálogo</button></div>}
-        <div className="catalogue-filter-panel"><div className="catalogue-filter-head"><b>Filtrá tu búsqueda</b>{(cat!=='all'||pMin!==''||pMax!==''||orden!=='relevancia')&&<button onClick={()=>{setCat('all');setPMin('');setPMax('');setOrden('relevancia');}}>Limpiar filtros</button>}</div><div className="catalogue-filter-fields">
+        <div className="catalogue-filter-panel"><div className="catalogue-filter-head"><b>Filtrá tu búsqueda</b>{(cat!=='all'||pMin!==''||pMax!==''||orden!=='relevancia')&&<button onClick={()=>filter({cat:'all',pMin:'',pMax:'',orden:'relevancia'})}>Limpiar filtros</button>}</div><div className="catalogue-filter-fields">
           <label>Categoría<select aria-label="Filtrar por categoría" value={cat} onChange={e=>setCat(e.target.value)}><option value="all">Todas las categorías</option>{[...catalogo.categorias].sort((a,b)=>a.nombre.localeCompare(b.nombre,'es')).map(c=><option key={c.slug} value={c.slug}>{c.nombre} ({c.cantidad.toLocaleString('es-AR')})</option>)}</select></label>
           <label>Ordenar<select aria-label="Ordenar productos" value={orden} onChange={e=>setOrden(e.target.value)}><option value="relevancia">Relevancia</option><option value="menor">Precio: menor a mayor</option><option value="mayor">Precio: mayor a menor</option></select></label>
           <label>Precio mínimo (US$)<input aria-label="Precio mínimo en dólares" type="number" min="0" placeholder="Desde" value={pMin} onChange={e=>setPMin(e.target.value)}/></label>
           <label>Precio máximo (US$)<input aria-label="Precio máximo en dólares" type="number" min="0" placeholder="Hasta" value={pMax} onChange={e=>setPMax(e.target.value)}/></label>
         </div></div>
         <h2 className="section-title">{onlyFavorites?'Productos guardados':tokens.length?`Resultados para “${q}”`:cat==='all'?'Catálogo completo':catalogo.categorias.find(c=>c.slug===cat)?.nombre||'Productos'}</h2><div className="section-sub">{filtrados.length.toLocaleString('es-AR')} {filtrados.length===1?'producto':'productos'} {(!enHome&&cat!=='all')?<button className="reset-catalogue" onClick={()=>explorar()}>Ver todo el catálogo</button>:null}</div>
-        {!filtrados.length?<div className="empty"><div className="big">⌕</div>No encontramos productos con ese criterio.<br/>Probá con otra palabra o ajustá los filtros.</div>:<><div className="grid">{filtrados.slice(0,limit).map(p=><Card key={p.codigo} p={p} rate={rate}/>)}</div>{filtrados.length>limit&&<div className="load-more-wrap"><button className="vermas" onClick={()=>setLimit(l=>l+48)}>Ver más productos <span>({(filtrados.length-limit).toLocaleString('es-AR')} más)</span></button></div>}</>}
+        {onlyFavorites&&!favoritesReady?<div className="empty" role="status">Cargando tus favoritos…</div>:!filtrados.length?<div className="empty"><div className="big">⌕</div>No encontramos productos con ese criterio.<br/>Probá con otra palabra o ajustá los filtros.</div>:<>{pagination('superior')}<div className="grid">{filtrados.slice(start,start+PRODUCTOS_POR_PAGINA).map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref}/>)}</div>{pagination('inferior')}</>}
       </section>
     </main>
   </>;
