@@ -35,8 +35,12 @@ function logisticaFija(tipo, usd, marca = '', titulo = '') {
     return 110;                      // < 500 USD -> flete más barato para competir con AR
   }
   if (tipo === 'celular') {
-    if (/\biphone\s*18\b/i.test(titulo)) return 150; // total sobre el USD del proveedor, confirmado por Francisco
-    if (esApple || usd > 600) return 70; // alta gama / iPhone
+    if (/\biphone\s*18e?\b/i.test(titulo)) return 150;
+    if (/\biphone\s*17e?\b/i.test(titulo)) return 70;
+    if (usd > 1500) return 130;
+    if (usd > 1200) return 110;
+    if (usd > 900) return 90;
+    if (usd >= 600 || esApple) return 70;
     return 50;
   }
   if (tipo === 'ps5') return 110; // consolas PlayStation 5 — provisional, Francisco reevalúa con más stock
@@ -63,7 +67,7 @@ export function precioFVR(p) {
     const fija = logisticaFija(tipoFijo, usd, marca, titulo);
     const final = ceil(usd + fija + recargo);
     const altaGama = (tipoFijo === 'celular')
-      ? (marca.toLowerCase().includes('apple') || usd > 600)
+      ? (marca.toLowerCase().includes('apple') || usd >= 600)
       : usd > 2000;
     return {
       via: 'fija',

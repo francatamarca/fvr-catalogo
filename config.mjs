@@ -25,7 +25,6 @@ export function esReacondicionado(titulo = '') {
 // Editable: agregar entradas cuando Francisco analice más productos grandes (ej: televisores).
 export const RECARGOS = [
   { label: 'Microondas +20', usd: 20, test: (titulo, categoria) => /microond/i.test(categoria) || /microondas/i.test(titulo) },
-  { label: 'iPhone 17 +10', usd: 10, test: (titulo) => /^(?:(?:celular|smartphone)\s+)?(?:apple\s+)?iphone\s*17\b/i.test(titulo.trim()) },
   // TVs de 32 y 43 pulgadas (los demás tamaños quedan como están, pendiente análisis de Francisco)
   { label: 'TV 32/43" +10', usd: 10, test: (titulo, categoria) => (/\btv\b|televis/i.test(`${titulo} ${categoria}`)) && /\b(32|43)\s*(''|"|”|´´|pulg)/i.test(titulo) },
 ];
