@@ -22,6 +22,10 @@ for (const name of source.categoriesExpected) {
 if (source.reports.reduce((n,r) => n + r.total, 0) !== source.rows.length) throw new Error('El total de filas no coincide con el proveedor.');
 const previous = JSON.parse(await readFile(process.argv[3] || 'data/catalogo.json', 'utf8'));
 const prev = new Map(previous.productos.map(p => [String(p.codigo), p]));
+const archivoLogistica=process.argv[4]?JSON.parse(await readFile(process.argv[4],'utf8')):null;
+const historicos=new Map((archivoLogistica?.productos||[]).map(p=>[String(p.codigo),p]));
+const normalizar=s=>String(s||'').trim().normalize('NFKC').toLowerCase();
+const positivo=n=>Number.isFinite(n)&&n>0;
 const unique = new Map();
 for (const r of source.rows) {
   if (!/^\d+$/.test(r.codigo) || !r.titulo || typeof r.available !== 'boolean' || r.available&&(!Number.isFinite(r.usd) || r.usd <= 0) ||
@@ -48,7 +52,13 @@ for (const r of unique.values()) {
   else if (/^(?:celular|smartphone|apple iphone|iphone)\b/i.test(r.titulo)) categoria='Celular';
   else if (!before && ['Celulares e SmartPhones','Celulares y SmartPhones'].includes(r.categoria)) categoria='Telefonía y accesorios';
   if (!pasaFiltroArgentina(r.usd,categoria)) { counters.ocultos_por_piso++; continue; }
-  const pesoKg=before?.pesoKg ?? null;
+  const historico=historicos.get(r.codigo);
+  const recuperar=!(before?.pesoKg||before?.vol)&&historico&&marca&&
+    normalizar(historico.marca)===normalizar(marca)&&
+    normalizar(textoEspanol(historico.titulo))===normalizar(textoEspanol(r.titulo))&&
+    (positivo(historico.pesoKg)||positivo(historico.vol));
+  const pesoKg=recuperar&&positivo(historico.pesoKg)?historico.pesoKg:before?.pesoKg??null;
+  const vol=recuperar&&positivo(historico.vol)?historico.vol:before?.vol??null;
   if (pesoKg!=null && pesoKg>PESO_MAX_KG) { counters.excluidos_por_peso++; continue; }
   if (esExcluidoEspecial(r.titulo,categoria)) { counters.excluidos_especiales++; continue; }
   const grupo=(source.idioma==='es'&&departamentoEspanol(r.categoria))||grupoDisplay(categoria);
@@ -69,7 +79,8 @@ for (const r of unique.values()) {
     categoria,catNombre:grupo.nombre,catSlug:grupo.slug||slugify(grupo.nombre),catEmoji:grupo.emoji,
     img:r.imgs[0]||before?.img||null,imgs:r.imgs.slice(1,6),madridUSD:r.usd,
     descuento,
-    pesoKg,vol:before?.vol??null,medidasCm:before?.medidasCm??null,medidasRevisadas:before?.medidasRevisadas??null,stock:null,disponible:true,
+    pesoKg,vol,medidasCm:before?.medidasCm??null,medidasRevisadas:before?.medidasRevisadas??null,stock:null,disponible:true,
+    ...(recuperar?{logisticaHistorica:archivoLogistica.generado}:before?.logisticaHistorica?{logisticaHistorica:before.logisticaHistorica}:{}),
     logisticaPendiente:pesoKg==null&&precio.via!=='fija',reacond:esReacondicionado(r.titulo),
     specs:before?.specs||[],precio,nuevoDesde,esNuevo,repuesto,
     ...(before?.ocultoAR?{ocultoAR:true,ar:before.ar}:{}),
