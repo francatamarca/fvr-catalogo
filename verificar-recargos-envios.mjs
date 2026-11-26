@@ -15,6 +15,7 @@ assert.throws(()=>tarifaUSD(null,null,1668.15));
 const precio=(titulo,categoria='Celulares y SmartPhones',usd=1000,marca='APPLE')=>precioFVR({usd,titulo,categoria,marca,recargo:recargoPara(titulo,categoria)});
 assert.equal(precio('Celular Apple iPhone 18 Pro Max').final_usd,1150);
 assert.equal(precio('Celular Apple iPhone 17 Pro').final_usd,1080);
+assert.equal(precio('Funda Apple para iPhone 17 Pro','Telefonía y accesorios',30).precio_unit_usd,41);
 assert.equal(precio('Celular Apple iPhone 16').final_usd,1070);
 assert.equal(precio('Celular Samsung',undefined,600,'SAMSUNG').final_usd,650);
 assert.equal(precio('Celular Samsung',undefined,601,'SAMSUNG').final_usd,671);
