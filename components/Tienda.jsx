@@ -44,8 +44,8 @@ export default function Tienda({catalogo}) {
   const {view,change,ready}=useCatalogNavigation(catRef);
   const {q,cat,orden,pMin,pMax,homeTab,brandTab,favoritos:onlyFavorites}=view;
   const filter=patch=>change({...patch,pagina:1,catalogo:true});
-  const setQ=q=>filter({q}),setCat=cat=>filter({cat}),setOrden=orden=>filter({orden}),setPMin=pMin=>filter({pMin}),setPMax=pMax=>filter({pMax});
-  const setOnlyFavorites=favoritos=>change({favoritos,pagina:1,catalogo:true},{scroll:'section',push:true});
+  const setQ=q=>filter({q,coleccion:''}),setCat=cat=>filter({cat}),setOrden=orden=>filter({orden}),setPMin=pMin=>filter({pMin}),setPMax=pMax=>filter({pMax});
+  const setOnlyFavorites=favoritos=>change({favoritos,coleccion:'',pagina:1,catalogo:true},{scroll:'section',push:true});
   const setBrandTab=brandTab=>change({brandTab});
   useEffect(()=>{if(ready)setOnly(onlyFavorites);},[ready,onlyFavorites,setOnly]);
   useEffect(()=>{
@@ -55,9 +55,30 @@ export default function Tienda({catalogo}) {
     document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);
     return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape);};
   },[menuOpen]);
+  const grupos=useMemo(()=>{
+    const porCodigo=new Map(catalogo.productos.map(p=>[String(p.codigo),p]));
+    const ordenar=(key,resto,valido)=>{
+      const portada=(catalogo.portada?.[key]||[]).map(id=>porCodigo.get(String(id))).filter(p=>p&&valido(p));
+      const destacados=new Set(portada.map(p=>p.codigo));
+      return [...portada,...resto.filter(p=>!destacados.has(p.codigo))];
+    };
+    return {
+      novedades:ordenar('novedades',catalogo.productos.filter(p=>p.esNuevo),()=>true),
+      ofertas:ordenar('ofertas',catalogo.productos.filter(p=>p.descuento>0),p=>p.descuento>0),
+    };
+  },[catalogo]);
+  const seleccion=useMemo(()=>{
+    const selected=[], counts=new Map();
+    for(const p of catalogo.productos){if(['APPLE','SAMSUNG','JBL','XIAOMI','SONY','LATTAFA','AMAZON'].includes(p.marca)&&(counts.get(p.marca)||0)<2){selected.push(p);counts.set(p.marca,(counts.get(p.marca)||0)+1);}}
+    return selected.length?selected:catalogo.productos.slice(0,10);
+  },[catalogo.productos]);
+  const colecciones={...grupos,seleccion};
+  const titulos={novedades:'Novedades',ofertas:'Ofertas de la semana',seleccion:'Selección FVR'};
+  const coleccion=colecciones[view.coleccion];
+  const homeProducts=colecciones[homeTab].slice(0,10);
   const tokens=norm(q).split(/\s+/).filter(Boolean);
   const filtrados=useMemo(()=>{
-    let result=catalogo.productos.filter(p=>{
+    let result=(coleccion||catalogo.productos).filter(p=>{
       if(onlyFavorites&&!favoriteCodes.includes(String(p.codigo)))return false;
       if(cat!=='all'&&p.catSlug!==cat)return false;
       if(tokens.length&&!tokens.every(t=>norm(`${p.titulo} ${p.marca} ${p.categoria}`).includes(t)))return false;
@@ -67,7 +88,7 @@ export default function Tienda({catalogo}) {
     if(orden==='menor')result=[...result].sort((a,b)=>precioDe(a)-precioDe(b));
     if(orden==='mayor')result=[...result].sort((a,b)=>precioDe(b)-precioDe(a));
     return result;
-  },[catalogo.productos,cat,q,orden,pMin,pMax,onlyFavorites,favoriteCodes]);
+  },[coleccion,catalogo.productos,cat,q,orden,pMin,pMax,onlyFavorites,favoriteCodes]);
   const totalPages=Math.max(1,Math.ceil(filtrados.length/PRODUCTOS_POR_PAGINA));
   const page=Math.min(view.pagina,totalPages),start=(page-1)*PRODUCTOS_POR_PAGINA;
   const returnHref=urlVista({...view,pagina:page});
@@ -78,19 +99,11 @@ export default function Tienda({catalogo}) {
   },[ready,favoritesReady,cat,view.pagina,page,onlyFavorites]);
   const goPage=pagina=>change({pagina,catalogo:true},{push:true,scroll:'section'});
   const pagination=position=><CatalogPagination page={page} totalPages={totalPages} total={filtrados.length} start={start+1} end={Math.min(start+PRODUCTOS_POR_PAGINA,filtrados.length)} onChange={goPage} position={position}/>;
-  const enHome=!onlyFavorites&&!view.catalogo&&page===1&&!tokens.length&&cat==='all'&&orden==='relevancia'&&pMin===''&&pMax==='';
-  const novedades=useMemo(()=>catalogo.productos.filter(p=>p.esNuevo),[catalogo.productos]);
-  const ofertas=useMemo(()=>catalogo.productos.filter(p=>p.descuento),[catalogo.productos]);
-  const seleccion=useMemo(()=>{
-    const selected=[], counts=new Map();
-    for(const p of catalogo.productos){if(['APPLE','SAMSUNG','JBL','XIAOMI','SONY','LATTAFA','AMAZON'].includes(p.marca)&&(counts.get(p.marca)||0)<2){selected.push(p);counts.set(p.marca,(counts.get(p.marca)||0)+1);}}
-    return selected.length?selected:catalogo.productos.slice(0,10);
-  },[catalogo.productos]);
-  const homeProducts=(homeTab==='ofertas'?ofertas:homeTab==='seleccion'?seleccion:novedades.length?novedades:catalogo.productos).slice(0,10);
+  const enHome=!coleccion&&!onlyFavorites&&!view.catalogo&&page===1&&!tokens.length&&cat==='all'&&orden==='relevancia'&&pMin===''&&pMax==='';
   const brandProducts=useMemo(()=>catalogo.productos.filter(p=>norm(p.marca)===norm(brandTab)).slice(0,8),[catalogo.productos,brandTab]);
   const fecha=(catalogo.stockRevisado||catalogo.generado)?new Date(catalogo.stockRevisado||catalogo.generado).toLocaleDateString('es-AR',{timeZone:'America/Argentina/Buenos_Aires',day:'numeric',month:'long'}):null;
-  const scrollCatalog=()=>change({pagina:1,catalogo:true},{push:true,scroll:'section'});
-  const explorar=(query='',category='all')=>{setMenuOpen(false);change({favoritos:false,q:query,cat:catalogo.categorias.some(c=>c.slug===category)?category:'all',pMin:'',pMax:'',pagina:1,catalogo:true},{push:true,scroll:'section'});};
+  const scrollCatalog=()=>change({coleccion:homeTab,pagina:1,catalogo:true},{push:true,scroll:'section'});
+  const explorar=(query='',category='all')=>{setMenuOpen(false);change({coleccion:'',favoritos:false,q:query,cat:catalogo.categorias.some(c=>c.slug===category)?category:'all',pMin:'',pMax:'',pagina:1,catalogo:true},{push:true,scroll:'section'});};
   const showTab=homeTab=>{change({homeTab});requestAnimationFrame(()=>sectionRef.current?.scrollIntoView({behavior:'smooth',block:'start'}));};
   const navCats=['TV y Video','Electrodomésticos','Aire Acondicionado','Celulares','Informática','Perfumes','Automóvil'].map(name=>{if(name==='Aire Acondicionado'){const c=catalogo.categorias.find(c=>c.slug==='electrodomesticos');return c?{...c,nombre:name,emoji:'❄️',query:'aire acondicionado',navKey:'aire'}:null;}return catalogo.categorias.find(c=>c.nombre===name||name==='Celulares'&&c.nombre==='Celulares y SmartPhones');}).filter(Boolean);
 
@@ -115,11 +128,11 @@ export default function Tienda({catalogo}) {
     <main className="catalogue-main">
       {enHome&&<>
         <section className="container home-product-section" ref={sectionRef}>
-          <div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Selecciones del catálogo"><button role="tab" aria-selected={homeTab==='novedades'} onClick={()=>showTab('novedades')}>Novedades <span>{novedades.length.toLocaleString('es-AR')}</span></button><button role="tab" aria-selected={homeTab==='ofertas'} onClick={()=>showTab('ofertas')}>Ofertas</button><button role="tab" aria-selected={homeTab==='seleccion'} onClick={()=>showTab('seleccion')}>Selección FVR</button></div><button className="section-link-btn" onClick={scrollCatalog}>Ver todo ↗</button></div>
-          <p className="market-section-description">{homeTab==='novedades'?'Productos incorporados en la última actualización del catálogo.':homeTab==='ofertas'?'Oportunidades del proveedor, con tu precio FVR calculado.':'Una selección de tecnología, audio y marcas para descubrir.'}</p>
-          {homeProducts.length?<div className="grid home-product-grid">{homeProducts.map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref} group="inicio"/>)}</div>:<div className="empty">No hay ofertas publicadas en esta actualización.</div>}
+          <div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Selecciones del catálogo"><button role="tab" aria-selected={homeTab==='novedades'} onClick={()=>showTab('novedades')}>Novedades <span>{grupos.novedades.length.toLocaleString('es-AR')}</span></button><button role="tab" aria-selected={homeTab==='ofertas'} onClick={()=>showTab('ofertas')}>Ofertas de la semana</button><button role="tab" aria-selected={homeTab==='seleccion'} onClick={()=>showTab('seleccion')}>Selección FVR</button></div><button className="section-link-btn" onClick={scrollCatalog}>Ver todo ↗</button></div>
+          <p className="market-section-description">{homeTab==='novedades'?'Ingresos recientes y novedades destacadas por Madrid Center.':homeTab==='ofertas'?'Oportunidades del proveedor, con tu precio FVR calculado.':'Una selección de tecnología, audio y marcas para descubrir.'}</p>
+          {homeProducts.length?<div className="grid home-product-grid">{homeProducts.map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref} group="inicio"/>)}</div>:<div className="empty">No hay productos disponibles en esta selección.</div>}
         </section>
-        <div className="container feature-promos"><button onClick={()=>explorar('Karma','perfumes')}><img src="/campanas/karma.webp" alt="Descubrí la colección Maison Karma" loading="lazy"/><span>Maison Karma <b>Ver fragancias ↗</b></span></button><button onClick={()=>explorar('Smartfy','tv-y-video')}><img src="/campanas/tv.webp" alt="Smart TV Smartfy" loading="lazy"/><span>Tu próximo Smart TV <b>Ver modelos ↗</b></span></button></div>
+        <div className="container feature-promos"><button onClick={()=>explorar('Karma','perfumes')}><img src="/campanas/karma-nov25.webp" alt="Descubrí la colección Maison Karma" loading="lazy"/><span>Maison Karma <b>Ver fragancias ↗</b></span></button><button onClick={()=>explorar('Notebook','informatica')}><img src="/campanas/notebooks-nov25.webp" alt="Notebooks" loading="lazy"/><span>Notebooks <b>Ver modelos ↗</b></span></button></div>
         <BrandGallery onExplore={explorar}/>
         <section className="container brand-products-section"><div className="market-section-head"><div className="market-tabs" role="tablist" aria-label="Productos por marca">{['KARMA','SMARTFY','MIDEA','COBY','MT HELMETS'].map(b=><button key={b} role="tab" aria-selected={brandTab===b} onClick={()=>setBrandTab(b)}>{b}</button>)}</div><button className="section-link-btn" onClick={()=>explorar(brandTab)}>Ver más +</button></div><div className="grid home-product-grid">{brandProducts.map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref} group="marca-inicio"/>)}</div></section>
         <CategoryGallery categories={catalogo.categorias} products={catalogo.productos} onExplore={explorar}/>
@@ -133,7 +146,7 @@ export default function Tienda({catalogo}) {
           <label>Precio mínimo (US$)<input aria-label="Precio mínimo en dólares" type="number" min="0" placeholder="Desde" value={pMin} onChange={e=>setPMin(e.target.value)}/></label>
           <label>Precio máximo (US$)<input aria-label="Precio máximo en dólares" type="number" min="0" placeholder="Hasta" value={pMax} onChange={e=>setPMax(e.target.value)}/></label>
         </div></div>
-        <h2 className="section-title">{onlyFavorites?'Productos guardados':tokens.length?`Resultados para “${q}”`:cat==='all'?'Catálogo completo':catalogo.categorias.find(c=>c.slug===cat)?.nombre||'Productos'}</h2><div className="section-sub">{filtrados.length.toLocaleString('es-AR')} {filtrados.length===1?'producto':'productos'} {(!enHome&&cat!=='all')?<button className="reset-catalogue" onClick={()=>explorar()}>Ver todo el catálogo</button>:null}</div>
+        <h2 className="section-title">{onlyFavorites?'Productos guardados':tokens.length?`Resultados para “${q}”`:cat==='all'?(titulos[view.coleccion]||'Catálogo completo'):catalogo.categorias.find(c=>c.slug===cat)?.nombre||'Productos'}</h2><div className="section-sub">{filtrados.length.toLocaleString('es-AR')} {filtrados.length===1?'producto':'productos'} {(!enHome&&(cat!=='all'||coleccion))?<button className="reset-catalogue" onClick={()=>explorar()}>Ver todo el catálogo</button>:null}</div>
         {onlyFavorites&&!favoritesReady?<div className="empty" role="status">Cargando tus favoritos…</div>:!filtrados.length?<div className="empty"><div className="big">⌕</div>No encontramos productos con ese criterio.<br/>Probá con otra palabra o ajustá los filtros.</div>:<>{pagination('superior')}<div className="grid">{filtrados.slice(start,start+PRODUCTOS_POR_PAGINA).map(p=><Card key={p.codigo} p={p} rate={rate} returnHref={returnHref}/>)}</div>{pagination('inferior')}</>}
       </section>
     </main>

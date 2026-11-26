@@ -3,11 +3,15 @@ REM ==== Actualizacion diaria del catalogo FVR ====
 REM Sincroniza Madrid Center -> compara precios AR -> publica version saneada -> sube a GitHub.
 REM La web (catalogo.fvrlogistica.com.ar) la refleja sola en ~30 min.
 
-cd /d "C:\Users\frann\Documents\FVR CLAUDE\fvr-catalogo"
+cd /d "%~dp0" || exit /b 1
 echo ==== %date% %time% ==== >> sync-diario.log
 
 echo [1/5] Sincronizando catalogo desde Madrid Center...
-node sync.mjs --full >> sync-diario.log 2>&1
+if "%~1"=="" (
+  node sync.mjs --full >> sync-diario.log 2>&1
+) else (
+  node importar-captura-ui.mjs "%~1" >> sync-diario.log 2>&1
+)
 if errorlevel 1 goto :error
 
 echo [2/5] Comparando precios contra Argentina (Naldo/OnCity/Cetrogar)...
@@ -23,10 +27,19 @@ node publish.mjs >> sync-diario.log 2>&1
 if errorlevel 1 goto :error
 
 echo [4/5] Subiendo a GitHub...
-git add data/catalogo.public.json.gz >> sync-diario.log 2>&1
-git commit -m "actualizacion diaria del catalogo" >> sync-diario.log 2>&1
+node verificar-publicacion.mjs >> sync-diario.log 2>&1
+if errorlevel 1 goto :error
+git add data/catalogo.public.json.gz data/envios.json >> sync-diario.log 2>&1
+if errorlevel 1 goto :error
+git diff --cached --quiet -- data/catalogo.public.json.gz data/envios.json
+if errorlevel 2 goto :error
+if not errorlevel 1 goto :push
+git commit --only -m "actualizacion diaria del catalogo" -- data/catalogo.public.json.gz data/envios.json >> sync-diario.log 2>&1
+if errorlevel 1 goto :error
+:push
 git push origin main >> sync-diario.log 2>&1
 
+if errorlevel 1 goto :error
 echo [5/5] Listo. La web se actualiza sola en ~30 min. >> sync-diario.log
 exit /b 0
 

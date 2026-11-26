@@ -12,7 +12,7 @@ function categoriaFija(cat = '', marca = '', titulo = '') {
   // SOLO consolas PS5: el título EMPIEZA con "Consola" (los accesorios dicen "Control PARA Consola...",
   // que no empieza con esa palabra). Ojo: el título de la consola puede incluir "1 Control".
   const t = titulo.toLowerCase();
-  if (/^\s*consola\b/.test(t) && /(playstation\s*5|\bps\s*5\b|\bps5\b)/.test(t)) return 'ps5';
+  if (/^\s*consol(?:a|e)?\b/.test(t) && /\b(?:playstation\s*5|ps\s*5)\b/.test(t)) return 'ps5';
   return null;
 }
 

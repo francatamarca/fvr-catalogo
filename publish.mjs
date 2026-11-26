@@ -24,9 +24,13 @@ for (const p of visibles) {
   catMap.get(p.catSlug).cantidad++;
 }
 
+const codigos = new Set(visibles.map(p => String(p.codigo)));
 const pub = {
   generado: c.generado, stockRevisado:c.stockRevisado||c.generado, lecturaIniciada:c.lecturaIniciada||c.generado, reglasPreciosActualizadas:c.reglasPreciosActualizadas, total: visibles.length,
   categorias: [...catMap.values()].sort((a, b) => b.cantidad - a.cantidad),
+  portada: Object.fromEntries(['ofertas','novedades'].map(key => {
+    return [key, (c.portada?.[key] || []).map(String).filter(code => codigos.has(code))];
+  })),
   resumen: { ...c.resumen, ocultos_por_precio_ar: ocultosAR },
   envios,
   productos: visibles.map(p => clientProduct(p, true)),

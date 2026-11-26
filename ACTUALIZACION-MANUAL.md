@@ -60,3 +60,9 @@ El listado muestra48productos por página, con controles arriba y abajo, primera
 Las tarjetas envían `volver` con la URL interna normalizada; la ficha valida ese destino y usa `scroll={false}` al regresar. Antes de abrir una ficha se guarda en `sessionStorage` la tarjeta, su posición en pantalla y scroll por URL (máximo25vistas). El regreso o Atrás reconstruye filtros/página y restaura la misma tarjeta, con cancelación si el cliente comienza a desplazarse. Los favoritos esperan a cargar sus códigos antes de ajustar la última página.
 
 Ejecutar `node verificar-paginacion.mjs` y probar en navegador página1/última/salto, filtros y regreso por enlace/Atrás, favoritos tras recargar y al eliminar el último resultado, URL fuera de rango y móvil. Con11065productos existen231páginas; la última contiene25. No cambia catálogo, precios, stock, envío ni pedido.
+
+## Lectura completa de precios, stock y portada
+
+Guardar los lotes privados de las 21 categorías en una carpeta por corrida. Los lotes br-índice-página contienen el costo USD visible, código, estado de compra y precio anterior. Los lotes es-índice-página contienen código, título en español y estado. Guardar en portada.json los códigos visibles de Novedades y Ofertas de la semana.
+
+Ejecutar `node conciliar-lotes.mjs carpeta-de-lotes captura-completa.json stock-anterior.json`. El último argumento es opcional. Se comprueban los totales, la última página, la antigüedad y los estados de ambos idiomas. Luego importar, sanear y verificar con `node verificar-publicacion.mjs captura-completa.json`. Revisar también los banners activos en la portada en español.

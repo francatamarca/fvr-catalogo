@@ -6,6 +6,9 @@ import {spawnSync} from 'node:child_process';
 import os from 'node:os';
 import path from 'node:path';
 import {calcCarrito,reconciliarPedido,mensajePedido,COMPRA_MINIMA} from './lib/cart.js';
+import {precioFVR} from './pricing.mjs';
+import {priceView} from './lib/format.js';
+import {clientProduct} from './lib/catalogo.js';
 import {esExcluidoEspecial} from './config.mjs';
 
 const publicText=gunzipSync(readFileSync('data/catalogo.public.json.gz')).toString('utf8');
@@ -14,6 +17,16 @@ assert.equal(c.total,c.productos.length);
 assert.equal(new Set(c.productos.map(p=>String(p.codigo))).size,c.total);
 assert.equal(c.categorias.reduce((n,x)=>n+x.cantidad,0),c.total);
 assert.equal(COMPRA_MINIMA,300);
+for(const titulo of ['Consol Sony PlayStation 5','Console Sony PlayStation 5','Consola Sony PS5']){
+  const pr=precioFVR({titulo,categoria:'Gamer',usd:795.2});
+  assert.equal(pr.final_usd,906);
+  assert.equal(priceView({precio:pr}).main,906);
+  assert.equal(calcCarrito([{via:pr.via,precioUnit:pr.final_usd,qty:1}]).total,906);
+}
+assert.equal(precioFVR({titulo:'Control para Consola Sony PlayStation 5',categoria:'Gamer',usd:61}).via,'general');
+for(const producto of c.productos){
+  if(producto.precio.m25)assert.equal(clientProduct(producto).precio.m25,true);
+}
 const shipping=JSON.parse(readFileSync('data/envios.json','utf8'));
 const tramo=kg=>shipping.tabla.find(t=>kg<=t.kg).usd;
 const item=(precio,extra={})=>({via:'general',precioUnit:precio,qty:1,pesoKg:1,...extra});
@@ -58,6 +71,12 @@ if(process.argv[2]){
   const source=JSON.parse(readFileSync(process.argv[2],'utf8'));
   const rows=new Map(source.rows.map(r=>[r.codigo,r]));
   assert.ok(c.productos.every(p=>rows.get(String(p.codigo))?.available===true));
+  for(const p of c.productos.filter(p=>/^consol(?:a|e)?\b/i.test(p.titulo)&&/playstation\s*5|\bps5\b/i.test(p.titulo))){
+    const final=Math.ceil(rows.get(p.codigo).usd+110);
+    assert.equal(p.precio.via,'fija');assert.equal(priceView(p).main,final);
+    assert.equal(calcCarrito([{via:p.precio.via,precioUnit:final,qty:1}]).total,final);
+  }
+  for(const id of c.portada.ofertas)assert.ok(c.productos.find(p=>p.codigo===id)?.descuento>0);
   if(source.idioma==='es'){
     assert.equal(c.stockRevisado,source.stockRevisado);
     assert.equal(c.categorias.length,21);

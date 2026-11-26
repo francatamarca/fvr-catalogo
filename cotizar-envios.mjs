@@ -3,7 +3,7 @@
 // mínimo ($100.000), pago en destino. Precio final = DOMICILIO + US$5; si no hay domicilio,
 // SUCURSAL/AGENCIA + US$10. Conversión ARS->USD con USDT (CriptoYa).
 import puppeteer from 'puppeteer-core';
-import { writeFile, mkdir } from 'node:fs/promises';
+import { writeFile, mkdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { CHROME_PATH, UA } from './config.mjs';
 import { leerCotizacion, tarifaUSD } from './lib/envios.js';
@@ -102,9 +102,10 @@ async function main() {
 
   await browser.close();
   if (!existsSync('./data')) await mkdir('./data', { recursive: true });
+  if (tabla.length!==PESOS.length)throw new Error('Cotización incompleta. Se conserva la última tabla verificada.');
   const out = {
     generado: new Date().toISOString(),
-    usdt: Math.round(rate),
+    usdt: rate,
     origen: 'PUERTO IGUAZU (3370)', destino: 'SAN SALVADOR DE JUJUY (4607)',
     regla: 'domicilio+5USD o sucursal+10USD, declarado 100000, pago en destino',
     divisor_volumetrico: 5000,
@@ -113,7 +114,8 @@ async function main() {
     sonda_volumetrica: volProbe,
     tabla,
   };
-  await writeFile('./data/envios.json', JSON.stringify(out, null, 2));
+  await writeFile('./data/envios.json.tmp', JSON.stringify(out, null, 2));
+  await rename('./data/envios.json.tmp','./data/envios.json');
   console.log(`\n✅ data/envios.json — ${tabla.length} tramos de peso cotizados`);
 }
 

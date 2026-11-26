@@ -34,6 +34,7 @@ const hoy = new Date().toLocaleDateString('en-CA', { timeZone:'America/Argentina
 const recent = d => d && Date.now() - Date.parse(d) <= 7 * 86400000;
 const counters = { vistos:unique.size, filas_listados:source.rows.length, agotados:0, ocultos_por_piso:0,
   excluidos_por_peso:0, excluidos_especiales:0, nuevos:0, repuestos:0, peso_pendiente:0 };
+const agotadosAnteriores=new Set(source.conocidosAgotados || []);
 const productos=[];
 for (const r of unique.values()) {
   if (!r.available) { counters.agotados++; continue; }
@@ -54,9 +55,10 @@ for (const r of unique.values()) {
   // Console es el nombre portugués mostrado por la web; la tarifa PS5 utiliza Consola.
   const tituloPrecio=r.titulo.replace(/^Console\b/i,'Consola');
   const precio=precioFVR({usd:r.usd,categoria,marca,titulo:tituloPrecio,pesoKg,recargo:recargoPara(tituloPrecio,categoria)});
-  const nuevoDesde=before?.nuevoDesde || (before?.esNuevo ? previous.generado?.slice(0,10) : null) || (!before?hoy:null);
+  const eraConocido=agotadosAnteriores.has(r.codigo);
+  const nuevoDesde=before?.nuevoDesde || (before?.esNuevo ? previous.generado?.slice(0,10) : null) || (!before&&!eraConocido?hoy:null);
   const esNuevo=!!recent(nuevoDesde);
-  const repuesto=before?.disponible===false || before?.stock===0;
+  const repuesto=(!before && !!eraConocido) || before?.disponible===false || before?.stock===0;
   if(esNuevo)counters.nuevos++;
   if(repuesto)counters.repuestos++;
   if(pesoKg==null && precio.via!=='fija')counters.peso_pendiente++;
@@ -80,7 +82,7 @@ for(const p of productos){if(!categories.has(p.catSlug))categories.set(p.catSlug
 const now=new Set(productos.map(p=>p.codigo));
 counters.pasaron_a_sin_stock=previous.productos.filter(p=>!now.has(String(p.codigo))).length;
 const out={generado:source.capturado,stockRevisado:source.stockRevisado||source.capturado,lecturaIniciada:source.lecturaIniciada||source.capturado,publicado:new Date().toISOString(),total:productos.length,categorias:[...categories.values()].sort((a,b)=>b.cantidad-a.cantidad),
-  fuente:{metodo:'listados públicos visibles de Madrid Center',capturado:source.capturado,categorias_validadas:source.reports.length},resumen:counters,productos};
+  portada:source.portada || {},fuente:{metodo:'listados públicos visibles de Madrid Center',capturado:source.capturado,categorias_validadas:source.reports.length},resumen:counters,productos};
 await writeFile('data/catalogo.json.tmp',JSON.stringify(out));
 await rename('data/catalogo.json.tmp','data/catalogo.json');
 await writeFile('data/sync-status.json',JSON.stringify({ok:true,...out.fuente,generado:out.generado,productosPublicados:out.total,resumen:counters},null,2));
