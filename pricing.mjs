@@ -26,8 +26,7 @@ export function fleteNacional(pesoKg) {
 }
 
 // ---- Logística fija por unidad según categoría ----
-function logisticaFija(tipo, usd, marca = '', titulo = '') {
-  const esApple = marca.toLowerCase().includes('apple');
+function logisticaFija(tipo, usd, titulo = '') {
   if (tipo === 'notebook' || tipo === 'tablet') {
     if (usd > 2000) return 200;      // alta gama
     if (usd > 1000) return 150;
@@ -36,12 +35,12 @@ function logisticaFija(tipo, usd, marca = '', titulo = '') {
   }
   if (tipo === 'celular') {
     if (/\biphone\s*18e?\b/i.test(titulo)) return 150;
-    if (/\biphone\s*17e?\b/i.test(titulo)) return 70;
+    if (/\biphone\s*17e?\b/i.test(titulo)) return 80;
     if (usd > 1500) return 130;
     if (usd > 1200) return 110;
     if (usd > 900) return 90;
-    if (usd >= 600 || esApple) return 70;
-    return 50;
+    if (usd >= 600) return 70;
+    return 55;
   }
   if (tipo === 'ps5') return 110; // consolas PlayStation 5 — provisional, Francisco reevalúa con más stock
   return null;
@@ -64,7 +63,7 @@ export function precioFVR(p) {
 
   if (tipoFijo) {
     // VÍA B — precio fijo por unidad, envío incluido, SIN combos
-    const fija = logisticaFija(tipoFijo, usd, marca, titulo);
+    const fija = logisticaFija(tipoFijo, usd, titulo);
     const final = ceil(usd + fija + recargo);
     const altaGama = (tipoFijo === 'celular')
       ? (marca.toLowerCase().includes('apple') || usd >= 600)

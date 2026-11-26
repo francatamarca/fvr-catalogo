@@ -14,12 +14,14 @@ assert.equal(tarifaUSD(null,52000,1668.15),42);
 assert.throws(()=>tarifaUSD(null,null,1668.15));
 const precio=(titulo,categoria='Celulares y SmartPhones',usd=1000,marca='APPLE')=>precioFVR({usd,titulo,categoria,marca,recargo:recargoPara(titulo,categoria)});
 assert.equal(precio('Celular Apple iPhone 18 Pro Max').final_usd,1150);
-assert.equal(precio('Celular Apple iPhone 17 Pro').final_usd,1070);
-assert.equal(precio('Celular Apple iPhone 17e',undefined,1600).final_usd,1670);
+assert.equal(precio('Celular Apple iPhone 17 Pro').final_usd,1080);
+assert.equal(precio('Celular Apple iPhone 17e',undefined,1600).final_usd,1680);
+assert.equal(precio('Celular Apple iPhone 17',undefined,599).final_usd,679);
+assert.equal(precio('Celular Apple iPhone 18',undefined,599).final_usd,749);
 assert.equal(precio('Celular Apple iPhone 18 Pro Max',undefined,1600).final_usd,1750);
 assert.equal(precio('Funda Apple para iPhone 17 Pro','Telefonía y accesorios',30).precio_unit_usd,41);
 for(const marca of ['APPLE','SAMSUNG']){
-  for(const [costo,adicional] of [[599.99,marca==='APPLE'?70:50],[600,70],[900,70],
+  for(const [costo,adicional] of [[100,55],[599.99,55],[600,70],[900,70],
     [900.01,90],[1200,90],[1200.01,110],[1500,110],[1500.01,130]]){
     const monto=Math.ceil(costo+adicional);
     const pr=precio('Celular '+marca,undefined,costo,marca);
