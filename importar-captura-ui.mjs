@@ -43,7 +43,8 @@ const productos=[];
 for (const r of unique.values()) {
   if (!r.available) { counters.agotados++; continue; }
   const before=prev.get(r.codigo);
-  const marca=r.marca || before?.marca || (/\bApple\b/i.test(r.titulo)?'APPLE':'');
+  const marcaVisible=/^-?\d+(?:[.,]\d+)?%$/.test(r.marca?.trim())?'':r.marca;
+  const marca=marcaVisible || before?.marca || (/\bApple\b/i.test(r.titulo)?'APPLE':'');
   // Conservamos la categoría hoja verificada de los SKU conocidos. Para altas,
   // identificamos las familias con tarifa fija a partir del nombre visible.
   let categoria=before?.categoria || r.categoria;
@@ -93,6 +94,7 @@ for(const p of productos){if(!categories.has(p.catSlug))categories.set(p.catSlug
 const now=new Set(productos.map(p=>p.codigo));
 counters.pasaron_a_sin_stock=previous.productos.filter(p=>!now.has(String(p.codigo))).length;
 const out={generado:source.capturado,stockRevisado:source.stockRevisado||source.capturado,lecturaIniciada:source.lecturaIniciada||source.capturado,publicado:new Date().toISOString(),total:productos.length,categorias:[...categories.values()].sort((a,b)=>b.cantidad-a.cantidad),
+  reglasPreciosActualizadas:previous.reglasPreciosActualizadas,
   portada:source.portada || {},fuente:{metodo:'listados públicos visibles de Madrid Center',capturado:source.capturado,categorias_validadas:source.reports.length},resumen:counters,productos};
 await writeFile('data/catalogo.json.tmp',JSON.stringify(out));
 await rename('data/catalogo.json.tmp','data/catalogo.json');
