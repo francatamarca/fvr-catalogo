@@ -46,7 +46,7 @@ async function readCategory(page, url, lang, name, i, attempt) {
   const sort=(lang==='es'?['Nuevo','Menor precio','Mayor precio']:['Novo','Menor preço','Maior preço'])[attempt-1];
   await amount.selectOption({label:limit});
   await page.getByRole('combobox').filter({has:page.getByRole('option',{name:sort,exact:true})}).first().selectOption({label:sort});
-  const seen = new Set();
+  const rows = new Map(), counts=[];
   let total, first = '', start=1;
   for (let pg=1;pg<=250;pg++) {
     if (denial) throw Error(denial);
@@ -77,21 +77,64 @@ async function readCategory(page, url, lang, name, i, attempt) {
     const advertised=num(range?.[3]||body.match(/([\d.,]+)\s+prod(?:uc|u)tos?\s+encontrad/i)?.[1]);
     total??=advertised;
     assert.ok(advertised===total&&total>0,name+' total cambiante');
-    assert.equal(listing.length,range?num(range[2])-start+1:total,name+' página incompleta');
+    assert.ok(listing.length>0,name+' página vacía');
+    const end=range?num(range[2]):total;
+    counts.push({inicio:start,fin:end,tarjetas:listing.length});
     for (const r of listing) {
       const code=lang==='es'?r[0]:r.codigo;
-      assert.ok(/^\d+$/.test(code)&&!seen.has(code),name+' repetido o sin código '+code);
-      seen.add(code);
+      assert.match(code||'',/^\d+$/);
+      const old=rows.get(code);
+      if(old)assert.deepEqual(facts(lang,old),facts(lang,r),name+' cambió '+code);
+      rows.set(code,r);
       if(lang==='br'&&r.available)assert.ok(r.usd>0,'Sin precio '+code);
     }
     const next=page.getByRole('button',{name:'Página siguiente',exact:true}).filter({visible:true}).first();
     const terminal=!await next.count()||!await next.isEnabled();
-    await save(lang+'-'+i+'-'+pg,{startTime,leido:stamp(),start,total,name,rows:listing,terminal});
-    if(terminal){assert.equal(seen.size,total,name+' categoría incompleta');return total}
-    start+=listing.length; first=lang==='es'?listing[0][0]:listing[0].codigo;
+    if(terminal){
+      assert.equal(end,total,name+' última página sin alcanzar el total anunciado');
+      return {rows,total,counts,sort,startTime,leido:stamp()};
+    }
+    start=end+1; first=lang==='es'?listing[0][0]:listing[0].codigo;
     await next.press('Enter');
   }
   throw Error('Sin fin de paginación '+name);
+}
+function facts(lang,r){
+  return lang==='es'?[r[1],r[2]]:[r.titulo,r.available,r.usd,r.oldUSD];
+}
+function matchingViews(pair){
+  const [es,br]=pair;
+  return es.total===br.total&&es.rows.size===br.rows.size&&
+    [...es.rows].every(([code,r])=>br.rows.get(code)?.available===r[2]);
+}
+async function verifyCategory(es,br,route,name,i){
+  const attempts=[];
+  for(let attempt=1;attempt<=3;attempt++){
+    try{
+      const readings=await Promise.allSettled([readCategory(es,host+route,'es',name,i,attempt),readCategory(br,host+route.slice(3),'br',name,i,attempt)]);
+      const failure=readings.find(r=>r.status==='rejected');
+      if(failure)throw failure.reason;
+      const pair=readings.map(r=>r.value);
+      const agreed=matchingViews(pair);
+      const exact=agreed&&pair.every(p=>p.rows.size===p.total);
+      // Un contador desfasado sólo se admite cuando la misma lista completa
+      // de códigos, precios y stock se reproduce con dos órdenes distintos.
+      const independentlyVerified=agreed&&pair.every(p=>p.rows.size>=p.total&&p.rows.size-p.total<=5)&&attempts.some(prior=>
+        matchingViews(prior)&&pair.every((p,n)=>p.total===prior[n].total&&p.rows.size===prior[n].rows.size&&
+          [...p.rows].every(([k,r])=>prior[n].rows.has(k)&&JSON.stringify(facts(n?'br':'es',r))===JSON.stringify(facts(n?'br':'es',prior[n].rows.get(k))))));
+      attempts.push(pair);
+      if(!exact&&!independentlyVerified)throw Error(name+' · únicos ES/BR '+pair.map(p=>p.rows.size+'/'+p.total).join(', '));
+      for(const [n,lang] of ['es','br'].entries()){
+        const p=pair[n];
+        await save(lang+'-'+i+'-1',{name,start:1,terminal:true,startTime:p.startTime,leido:p.leido,total:p.rows.size,rows:[...p.rows.values()]});
+      }
+      await save('evidencia-'+i,{name,observaciones:attempts.map(pair=>pair.map(p=>({orden:p.sort,anunciado:p.total,unicos:p.rows.size,paginas:p.counts})))});
+      return pair[0].rows.size;
+    }catch(error){
+      if(denial||attempt===3)throw Error(denial||error.message);
+      console.log('Releyendo',name,error.message);
+    }
+  }
 }
 try {
   for(const lang of ['es','br']){
@@ -100,7 +143,7 @@ try {
     // Evitar descargar y decodificar cientos de imágenes por página.
     await ctx.route('**/*',r=>{
       const req=r.request();
-      if(['image','media','font'].includes(req.resourceType())||req.url().includes('/cdn-cgi/challenge-platform/'))return r.abort();
+      if(['image','media','font'].includes(req.resourceType()))return r.abort();
       return r.continue();
     });
     ctx.on('response',r=>{if(r.headers()['cf-mitigated']==='challenge'||(r.status()===403&&['document','xhr','fetch'].includes(r.request().resourceType())))denial='Acceso rechazado en '+new URL(r.url()).hostname;});
@@ -118,6 +161,7 @@ try {
   home.ofertas=await codes();assert.ok(home.novedades.length===8&&home.ofertas.length===8&&home.banners.length&&home.bannersBR.length);
   await save('portada',home);
   const menu=await es.context().newPage();
+  const incomplete=[];
   for(const [i,name] of departments.entries()){
     if(denial) throw Error(denial);
     const saved=await persistedPair(i,name);
@@ -128,18 +172,12 @@ try {
     await menu.getByRole('button',{name,exact:true}).last().click();
     await menu.waitForURL(u=>u.pathname.startsWith('/es/categoria/'));
     const route=new URL(menu.url()).pathname;
-    for(let attempt=1;attempt<=3;attempt++){
-      if(denial)throw Error(denial);
-      const list=await readdir(root);
-      for(const lang of ['br','es'])for(const f of filesFor(list,lang,i))await unlink(path.join(root,f));
-      const results=await Promise.allSettled([readCategory(es,host+route,'es',name,i,attempt),readCategory(br,host+route.slice(3),'br',name,i,attempt)]);
-      const error=results.find(r=>r.status==='rejected');
-      const total=!error&&await persistedPair(i,name);
-      if(total){console.log('FVR_CATEGORIA',i+1,name,total);break}
-      if(denial||attempt===3)throw Error(denial||error?.reason?.message||'Las vistas difieren en '+name);
-      console.log('Releyendo',name,error?.reason?.message||'Cambios entre vistas');
-    }
+    const list=await readdir(root);
+    for(const lang of ['br','es'])for(const f of filesFor(list,lang,i))await unlink(path.join(root,f));
+    try{console.log('FVR_CATEGORIA',i+1,name,await verifyCategory(es,br,route,name,i))}
+    catch(error){if(denial)throw error;incomplete.push(name+': '+error.message);console.log('Pendiente',incomplete.at(-1))}
   }
   if(denial)throw Error(denial);
+  if(incomplete.length)throw Error(incomplete.join(' / '));
   console.log('FVR_LECTURA_COMPLETA',stamp());
 }finally{await browser.close()}

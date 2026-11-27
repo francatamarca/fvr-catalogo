@@ -86,7 +86,9 @@ async function publish(initial){
     const result={generado:pub.generado,stock:pub.stockRevisado,total:pub.total,altas:[...b.keys()].filter(k=>!a.has(k)).length,bajas:[...a.keys()].filter(k=>!b.has(k)).length,precios:[...b].filter(([k,p])=>a.has(k)&&price(p)!==price(a.get(k))).length,novedades:pub.portada.novedades.length,ofertas:pub.portada.ofertas.length,campanas};
     await fs.copyFile(path.join(repo,'data/catalogo.json'),path.join(dir,'catalogo.json'));
     await run('git',['add','--','data/catalogo.public.json.gz','data/campanas.json'],repo);
-    await run('git',['-c','user.name=FVR Catálogo','-c','user.email=fvr-catalogo@users.noreply.github.com','commit','-m','Actualizar catálogo FVR desde las 21 categorías públicas'],repo);
+    const author=process.env.FVR_GIT_AUTHOR_EMAIL;
+    assert.ok(author&&/^[^\s@]+@[^\s@]+$/.test(author),'Falta el autor de despliegue FVR');
+    await run('git',['-c','user.name=FVR Catálogo','-c','user.email='+author,'commit','-m','Actualizar catálogo FVR desde las 21 categorías públicas'],repo);
     await run('git',['push','origin','HEAD:main'],repo);
     promoted=true;await atomic(pointer,{dir});
     result.commit=(await run('git',['rev-parse','HEAD'],repo)).stdout.trim();
