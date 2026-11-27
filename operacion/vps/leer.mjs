@@ -84,7 +84,7 @@ try {
   }
   const {es,br}=contexts;
   const codes=()=>es.locator(cards).evaluateAll(els=>els.slice(0,8).map(c=>c.innerText.match(/Cod:\s*(\d+)/)?.[1]));
-  const heroes=p=>p.getByRole('region',{name:'Carrusel de productos destacados'}).locator('button:has(img)').evaluateAll(bs=>bs.map(b=>({label:b.getAttribute('aria-label'),src:b.querySelector('img').src})));
+  const heroes=p=>p.locator('img[alt^="Promoción destacada"]').evaluateAll(imgs=>imgs.map(img=>({label:img.closest('[aria-label]')?.getAttribute('aria-label'),src:img.src})).filter(x=>x.src.includes('banners')));
   const home={leido:stamp(),banners:await heroes(es),bannersBR:await heroes(br),novedades:await codes()};
   await es.getByRole('button',{name:'OFERTAS DE LA SEMANA',exact:true}).click();
   await es.waitForFunction(first=>{const el=Array.from(document.querySelectorAll('main div[aria-label^="Tarjeta de"]')).find(c=>c.getBoundingClientRect().width);return el&&!el.innerText.includes('Cod: '+first)},home.novedades[0]);
