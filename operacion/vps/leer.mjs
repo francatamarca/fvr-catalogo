@@ -37,25 +37,27 @@ async function save(name, obj) {
   await writeFile(filename+'.tmp',JSON.stringify(obj));
   await rename(filename+'.tmp',filename);
 }
-async function readCategory(page, url, lang, name, i) {
+async function readCategory(page, url, lang, name, i, attempt) {
   const startTime = stamp();
   const response = await page.goto(url,{waitUntil:'domcontentloaded'});
   assert.equal(response.status(),200);
   const amount = page.locator('select:visible').filter({has:page.locator('option[value="100"]')}).first();
-  await amount.selectOption({label:'100'});
-  await page.getByRole('combobox').filter({has:page.getByRole('option',{name:lang==='es'?'Nuevo':'Novo',exact:true})}).first().selectOption({label:lang==='es'?'Nuevo':'Novo'});
+  const limit=attempt===3?'48':'100';
+  const sort=(lang==='es'?['Nuevo','Menor precio','Mayor precio']:['Novo','Menor preço','Maior preço'])[attempt-1];
+  await amount.selectOption({label:limit});
+  await page.getByRole('combobox').filter({has:page.getByRole('option',{name:sort,exact:true})}).first().selectOption({label:sort});
   const seen = new Set();
   let total, first = '', start=1;
   for (let pg=1;pg<=250;pg++) {
     if (denial) throw Error(denial);
-    await page.waitForFunction(({start,first,lang})=>{
+    await page.waitForFunction(({start,first,limit,sort})=>{
       const card = Array.from(document.querySelectorAll('main div[aria-label^="Tarjeta de"]')).find(c=>c.getBoundingClientRect().width);
       const code = card?.innerText.match(/Cod:\s*(\d+)/)?.[1];
       const text = document.body.innerText;
       const range = text.match(/Mostrando\s+([\d.,]+)\s+a\s+[\d.,]+\s+de\s+[\d.,]+/i);
       const selections=Array.from(document.querySelectorAll('select')).map(s=>s.selectedOptions[0]?.textContent);
-      return code && code!==first && (range?Number(range[1].replace(/\D/g,''))===start:start===1) && selections.includes('100') && selections.includes(lang==='es'?'Nuevo':'Novo');
-    },{start,first,lang},{timeout:25000});
+      return code && code!==first && (range?Number(range[1].replace(/\D/g,''))===start:start===1) && selections.includes(limit) && selections.includes(sort);
+    },{start,first,limit,sort},{timeout:25000});
     const listing=await page.locator(cards).evaluateAll((elements,lang)=>{
       return elements.map(c=>{
         const lines=c.innerText.split(/\n+/).map(s=>s.trim()).filter(Boolean);
@@ -130,7 +132,7 @@ try {
       if(denial)throw Error(denial);
       const list=await readdir(root);
       for(const lang of ['br','es'])for(const f of filesFor(list,lang,i))await unlink(path.join(root,f));
-      const results=await Promise.allSettled([readCategory(es,host+route,'es',name,i),readCategory(br,host+route.slice(3),'br',name,i)]);
+      const results=await Promise.allSettled([readCategory(es,host+route,'es',name,i,attempt),readCategory(br,host+route.slice(3),'br',name,i,attempt)]);
       const error=results.find(r=>r.status==='rejected');
       const total=!error&&await persistedPair(i,name);
       if(total){console.log('FVR_CATEGORIA',i+1,name,total);break}
