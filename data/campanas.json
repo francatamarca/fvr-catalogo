@@ -1,6 +1,6 @@
 {
-  "capturado": "2026-11-25",
-  "fuente": "Campañas visibles en la portada en español de Madrid Center",
+  "capturado": "2026-11-27",
+  "fuente": "Portadas de Madrid Center en Brasil y en español, con imágenes en español cuando están disponibles",
   "items": [
     {
       "image": "perfumes-nov25",
@@ -11,20 +11,20 @@
       "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/HEm5HFEUO1QBBKi1cxwiYPtEIMeRBGmMzXQGVqS4.webp"
     },
     {
-      "image": "aire-nov25",
-      "title": "Climatización Smartfy",
-      "detail": "Equipos de aire acondicionado",
-      "category": "electrodomesticos",
-      "q": "aire acondicionado smartfy",
-      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/mryLMK5dJvqrbZuZnTmEuFsV6cnyLnQRtqc9Ojwr.webp"
-    },
-    {
       "image": "iphone-nov25",
       "title": "iPhone 18 Pro y Pro Max",
       "detail": "Modelos disponibles con envío incluido",
       "category": "celulares",
       "q": "iphone 18",
       "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/GTJjUvI54oty5nBtAQNITypsIBiPgdsagADrKyVf.webp"
+    },
+    {
+      "image": "aire-nov25",
+      "title": "Climatización Smartfy",
+      "detail": "Equipos de aire acondicionado",
+      "category": "electrodomesticos",
+      "q": "aire acondicionado smartfy",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/mryLMK5dJvqrbZuZnTmEuFsV6cnyLnQRtqc9Ojwr.webp"
     },
     {
       "image": "notebooks-nov25",
@@ -41,6 +41,22 @@
       "category": "perfumes",
       "q": "Karma",
       "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/aQRYJcGL9V39tAGzOFivFBm3be6EBuhQIiCxTiJb.webp"
+    },
+    {
+      "image": "dji-air-3s",
+      "title": "DJI Air 3S",
+      "detail": "Ver drones y versiones disponibles",
+      "category": "camaras-y-drones",
+      "q": "DJI Air 3s",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/1766253317_Banner%20DJI%20copiar.webp"
+    },
+    {
+      "image": "axxis",
+      "title": "Cascos Axxis",
+      "detail": "Elegí tu modelo y talle",
+      "category": "motociclismo",
+      "q": "casco Axxis",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/1778764172_Axxis.webp"
     }
   ]
 }

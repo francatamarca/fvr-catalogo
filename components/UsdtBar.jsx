@@ -5,9 +5,9 @@ export default function UsdtBar() {
   const rate = useRate();
   return (
     <div className="usdt-bar">
-      <span className="dot">●</span>{' '}
-      Precios en <b>USDT</b> · 1 USDT = <b>{rate ? `$${rate.toLocaleString('es-AR', { maximumFractionDigits: 0 })} ARS` : '...'}</b>
-      {' '}· cotización dólar cripto en tiempo real
+      Precios en <b>USDT</b> · Binance vía CriptoYa · {rate
+        ? <>1 USDT = <b>{rate.toLocaleString('es-AR', { style: 'currency', currency: 'ARS' })} ARS</b></>
+        : 'Cotización en pesos pendiente'}
     </div>
   );
 }
