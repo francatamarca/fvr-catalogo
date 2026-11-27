@@ -75,7 +75,13 @@ async function readCategory(page, url, lang, name, i) {
 try {
   for(const lang of ['es','br']){
     const ctx=await browser.newContext();
-    await ctx.route('**/cdn-cgi/challenge-platform/**',r=>r.abort());
+    // Para comparar el catálogo sólo necesitamos las URL visibles de las fotos.
+    // Evitar descargar y decodificar cientos de imágenes por página.
+    await ctx.route('**/*',r=>{
+      const req=r.request();
+      if(['image','media','font'].includes(req.resourceType())||req.url().includes('/cdn-cgi/challenge-platform/'))return r.abort();
+      return r.continue();
+    });
     ctx.on('response',r=>{if(r.headers()['cf-mitigated']==='challenge'||(r.status()===403&&['document','xhr','fetch'].includes(r.request().resourceType())))denial='Acceso rechazado en '+new URL(r.url()).hostname;});
     const p=await ctx.newPage();p.setDefaultTimeout(20000);
     contexts[lang]=p;
