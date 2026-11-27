@@ -1,5 +1,5 @@
 import { firefox } from 'playwright';
-import { mkdir, writeFile, rename } from 'node:fs/promises';
+import { mkdir, writeFile, rename, readdir, readFile, unlink } from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 
@@ -13,6 +13,25 @@ const contexts = {};
 const cards = 'main div[aria-label^="Tarjeta de"]:visible';
 const stamp = () => new Date().toISOString();
 let denial;
+const filesFor=(list,lang,i)=>list.filter(f=>f.startsWith(lang+'-'+i+'-')&&f.endsWith('.json'));
+async function persistedPair(i,name){
+  const list=await readdir(root);
+  const ids=[];
+  for(const lang of ['es','br']){
+    const pages=await Promise.all(filesFor(list,lang,i).map(async f=>JSON.parse(await readFile(path.join(root,f),'utf8'))));
+    pages.sort((a,b)=>a.start-b.start);
+    if(!pages.length||!pages.at(-1).terminal)return null;
+    const rows=new Map();let n=0;
+    for(const page of pages){
+      if(page.name!==name||page.start!==n+1||page.total!==pages[0].total||Date.now()-Date.parse(page.startTime)>2*3600000)return null;
+      for(const r of page.rows)rows.set(lang==='es'?r[0]:r.codigo,lang==='es'?r[2]:r.available);
+      n+=page.rows.length;
+    }
+    if(n!==pages[0].total||rows.size!==n)return null;
+    ids.push(rows);
+  }
+  return ids[0].size===ids[1].size&&[...ids[0]].every(([k,v])=>ids[1].get(k)===v)?ids[0].size:null;
+}
 async function save(name, obj) {
   const filename = path.join(root, name+'.json');
   await writeFile(filename+'.tmp',JSON.stringify(obj));
@@ -99,14 +118,25 @@ try {
   const menu=await es.context().newPage();
   for(const [i,name] of departments.entries()){
     if(denial) throw Error(denial);
+    const saved=await persistedPair(i,name);
+    if(saved){console.log('FVR_CATEGORIA',i+1,name,saved,'verificada en esta corrida');continue}
     await menu.goto(host+'/es/home',{waitUntil:'domcontentloaded'});
     await menu.locator(cards).first().waitFor();
     await menu.getByRole('button',{name:'Menú Principal',exact:true}).click();
     await menu.getByRole('button',{name,exact:true}).last().click();
     await menu.waitForURL(u=>u.pathname.startsWith('/es/categoria/'));
     const route=new URL(menu.url()).pathname;
-    const [a,b]=await Promise.all([readCategory(es,host+route,'es',name,i),readCategory(br,host+route.slice(3),'br',name,i)]);
-    assert.equal(a,b);console.log('FVR_CATEGORIA',i+1,name,a);
+    for(let attempt=1;attempt<=3;attempt++){
+      if(denial)throw Error(denial);
+      const list=await readdir(root);
+      for(const lang of ['br','es'])for(const f of filesFor(list,lang,i))await unlink(path.join(root,f));
+      const results=await Promise.allSettled([readCategory(es,host+route,'es',name,i),readCategory(br,host+route.slice(3),'br',name,i)]);
+      const error=results.find(r=>r.status==='rejected');
+      const total=!error&&await persistedPair(i,name);
+      if(total){console.log('FVR_CATEGORIA',i+1,name,total);break}
+      if(denial||attempt===3)throw Error(denial||error?.reason?.message||'Las vistas difieren en '+name);
+      console.log('Releyendo',name,error?.reason?.message||'Cambios entre vistas');
+    }
   }
   if(denial)throw Error(denial);
   console.log('FVR_LECTURA_COMPLETA',stamp());

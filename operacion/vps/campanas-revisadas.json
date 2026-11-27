@@ -1,0 +1,90 @@
+[
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/RcpBui5fAY58RrglSBBPVu2usflcO6BFmgcE3O2a.webp",
+    "excluida": true
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/uHLP4CVtKNqMvXMrJis5I5K5vkwwhiERniZhtzlm.webp",
+    "es": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/HEm5HFEUO1QBBKi1cxwiYPtEIMeRBGmMzXQGVqS4.webp",
+    "item": {
+      "image": "perfumes-nov25",
+      "title": "Perfumes de nicho",
+      "detail": "Descubrí las fragancias disponibles",
+      "category": "perfumes",
+      "q": "",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/HEm5HFEUO1QBBKi1cxwiYPtEIMeRBGmMzXQGVqS4.webp"
+    }
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/up07pGVndPPHI9gysK4iyCFnbklnmUB5SakWi7Bp.webp",
+    "es": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/GTJjUvI54oty5nBtAQNITypsIBiPgdsagADrKyVf.webp",
+    "item": {
+      "image": "iphone-nov25",
+      "title": "iPhone 18 Pro y Pro Max",
+      "detail": "Modelos disponibles con envío incluido",
+      "category": "celulares",
+      "q": "iphone 18",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/GTJjUvI54oty5nBtAQNITypsIBiPgdsagADrKyVf.webp"
+    }
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/VCQwIOyXWFqg6DD8n2cFXEr48ZZb3c7eNc9qwFTJ.webp",
+    "es": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/mryLMK5dJvqrbZuZnTmEuFsV6cnyLnQRtqc9Ojwr.webp",
+    "item": {
+      "image": "aire-nov25",
+      "title": "Climatización Smartfy",
+      "detail": "Equipos de aire acondicionado",
+      "category": "electrodomesticos",
+      "q": "aire acondicionado smartfy",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/mryLMK5dJvqrbZuZnTmEuFsV6cnyLnQRtqc9Ojwr.webp"
+    }
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/s34pcMyEA1cjgBAc8di3zlgsIeRGmTlVxZeClWpH.webp",
+    "es": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/vqeq7XyBTnil5hsvrnpWXrEJI2yV5tyyBxq1zWlo.webp",
+    "item": {
+      "image": "notebooks-nov25",
+      "title": "Notebooks",
+      "detail": "Elegí tu notebook con envío incluido",
+      "category": "informatica",
+      "q": "notebook",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/vqeq7XyBTnil5hsvrnpWXrEJI2yV5tyyBxq1zWlo.webp"
+    }
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/GeE1IoJxxyJTIoMqgbo3XaIeC86mZLEZBUCa6kL6.webp",
+    "es": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/aQRYJcGL9V39tAGzOFivFBm3be6EBuhQIiCxTiJb.webp",
+    "item": {
+      "image": "karma-nov25",
+      "title": "Maison Karma",
+      "detail": "Explorá las fragancias de la colección",
+      "category": "perfumes",
+      "q": "Karma",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/aQRYJcGL9V39tAGzOFivFBm3be6EBuhQIiCxTiJb.webp"
+    }
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/1766253317_Banner DJI copiar.webp",
+    "es": null,
+    "item": {
+      "image": "dji-air-3s",
+      "title": "DJI Air 3S",
+      "detail": "Ver drones y versiones disponibles",
+      "category": "camaras-y-drones",
+      "q": "DJI Air 3s",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/1766253317_Banner%20DJI%20copiar.webp"
+    }
+  },
+  {
+    "br": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/1778764172_Axxis.webp",
+    "es": null,
+    "item": {
+      "image": "axxis",
+      "title": "Cascos Axxis",
+      "detail": "Elegí tu modelo y talle",
+      "category": "motociclismo",
+      "q": "casco Axxis",
+      "sourceUrl": "https://dados.sfo3.cdn.digitaloceanspaces.com/banners/1778764172_Axxis.webp"
+    }
+  }
+]

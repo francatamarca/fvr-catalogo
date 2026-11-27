@@ -1,0 +1,86 @@
+{
+  "id": "FvrCatalogoDiarioV1",
+  "name": "FVR · Catálogo diario Madrid Center",
+  "active": false,
+  "nodes": [
+    {
+      "id": "3e4419d3-b122-473e-b5ec-7f7b5dc2aa6d",
+      "name": "Todos los días a las 7",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 7 * * *"
+            }
+          ]
+        }
+      },
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "id": "6343b5d6-6f56-472d-9d66-45e5aa1571b5",
+      "name": "Ejecutar ahora",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "parameters": {},
+      "position": [
+        0,
+        180
+      ]
+    },
+    {
+      "id": "db6247e0-a0f8-4589-aec2-d94ba59b8454",
+      "name": "Revisar y publicar FVR",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "parameters": {
+        "method": "POST",
+        "url": "http://fvr-catalogo-lector:8080/actualizar",
+        "options": {
+          "timeout": 3300000
+        }
+      },
+      "position": [
+        280,
+        40
+      ]
+    }
+  ],
+  "connections": {
+    "Todos los días a las 7": {
+      "main": [
+        [
+          {
+            "node": "Revisar y publicar FVR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ejecutar ahora": {
+      "main": [
+        [
+          {
+            "node": "Revisar y publicar FVR",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "America/Argentina/Buenos_Aires",
+    "saveDataSuccessExecution": "none",
+    "saveDataErrorExecution": "all"
+  },
+  "versionId": "2bc6c683-b474-4c83-975b-87ae9520ae02"
+}
