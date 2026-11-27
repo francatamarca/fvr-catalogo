@@ -146,7 +146,13 @@ try {
       if(['image','media','font'].includes(req.resourceType()))return r.abort();
       return r.continue();
     });
-    ctx.on('response',r=>{if(r.headers()['cf-mitigated']==='challenge'||(r.status()===403&&['document','xhr','fetch'].includes(r.request().resourceType())))denial='Acceso rechazado en '+new URL(r.url()).hostname;});
+    ctx.on('response',r=>{
+      if(denial||new URL(r.url()).origin!==host)return;
+      if(r.headers()['cf-mitigated']==='challenge'||(r.status()===403&&['document','xhr','fetch'].includes(r.request().resourceType()))){
+        denial='Madrid Center rechazó la lectura ('+r.status()+') en '+new URL(r.url()).pathname;
+        void browser.close().catch(()=>{});
+      }
+    });
     const p=await ctx.newPage();p.setDefaultTimeout(20000);
     contexts[lang]=p;
     await p.goto(host+(lang==='es'?'/es':'')+'/home',{waitUntil:'domcontentloaded'});
@@ -180,4 +186,4 @@ try {
   if(denial)throw Error(denial);
   if(incomplete.length)throw Error(incomplete.join(' / '));
   console.log('FVR_LECTURA_COMPLETA',stamp());
-}finally{await browser.close()}
+}catch(error){throw Error(denial||error.message)}finally{await browser.close()}
