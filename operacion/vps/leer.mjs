@@ -43,28 +43,40 @@ async function readCategory(page, url, lang, name, i, attempt) {
   assert.equal(response.status(),200);
   const amount = page.locator('select:visible').filter({has:page.locator('option[value="100"]')}).first();
   const limit=attempt===3?'48':'100';
-  const sort=(lang==='es'?['Nuevo','Menor precio','Mayor precio']:['Novo','Menor preço','Maior preço'])[attempt-1];
+  const sort=(['Belleza y Salud','Perfumes'].includes(name)?['price_asc','newest','price_desc']:['newest','price_asc','price_desc'])[attempt-1];
   await amount.selectOption({label:limit});
-  await page.getByRole('combobox').filter({has:page.getByRole('option',{name:sort,exact:true})}).first().selectOption({label:sort});
+  await page.locator('select:visible').filter({has:page.locator('option[value="newest"]')}).first().selectOption(sort);
   const rows = new Map(), counts=[];
   let total, first = '', start=1;
   for (let pg=1;pg<=250;pg++) {
     if (denial) throw Error(denial);
-    await page.waitForFunction(({start,first,limit,sort})=>{
+    const ready=()=>page.waitForFunction(({start,first,limit,sort})=>{
       const card = Array.from(document.querySelectorAll('main div[aria-label^="Tarjeta de"]')).find(c=>c.getBoundingClientRect().width);
       const code = card?.innerText.match(/Cod:\s*(\d+)/)?.[1];
       const text = document.body.innerText;
-      const range = text.match(/Mostrando\s+([\d.,]+)\s+a\s+[\d.,]+\s+de\s+[\d.,]+/i);
-      const selections=Array.from(document.querySelectorAll('select')).map(s=>s.selectedOptions[0]?.textContent);
-      return code && code!==first && (range?Number(range[1].replace(/\D/g,''))===start:start===1) && selections.includes(limit) && selections.includes(sort);
+      const range=text.match(/Mostrando\s+([\d.,]+)\s+a\s+([\d.,]+)\s+de\s+([\d.,]+)/i);
+      const [from,end,count]=range?range.slice(1).map(x=>Number(x.replace(/\D/g,''))):[];
+      const selections=Array.from(document.querySelectorAll('select')).filter(s=>s.getBoundingClientRect().width).map(s=>s.value);
+      const single=text.match(/([\d.,]+)\s+prod(?:uc|u)tos?\s+encontrad/i);
+      const rightPage=range?from===start&&end===Math.min(start+Number(limit)-1,count):start===1&&single&&Number(single[1].replace(/\D/g,''))<=Number(limit);
+      return code && code!==first && rightPage && selections.includes(limit) && selections.includes(sort);
     },{start,first,limit,sort},{timeout:25000});
+    try { await ready(); }
+    catch(error){
+      if(denial||!(await page.getByRole('heading',{name:'Error al cargar productos',exact:true}).isVisible()))throw error;
+      const response=await page.reload({waitUntil:'domcontentloaded'});
+      assert.equal(response?.status(),200);
+      await ready();
+    }
     const listing=await page.locator(cards).evaluateAll((elements,lang)=>{
       return elements.map(c=>{
         const lines=c.innerText.split(/\n+/).map(s=>s.trim()).filter(Boolean);
         const idx=lines.findIndex(s=>/^Cod:/i.test(s));
         const codigo=lines[idx]?.match(/\d+/)?.[0],titulo=c.querySelector('h3')?.innerText;
         const btn=c.querySelector('button[aria-label*="al carrito"]');
-        const available=!!btn&&!btn.disabled&&btn.getAttribute('aria-disabled')!=='true'&&!lines.some(s=>/^(agotado|esgotado)$/i.test(s));
+        const sold=lines.some(s=>/^(agotado|esgotado)$/i.test(s))||!!c.querySelector('button[aria-label*="no disponible" i]');
+        if(!btn&&!sold)throw Error('Falta el estado de compra de '+codigo);
+        const available=!!btn&&!btn.disabled&&btn.getAttribute('aria-disabled')!=='true'&&!sold;
         if(lang==='es')return [codigo,titulo,available];
         const prices=lines.filter(s=>/^\$\s*[\d,.]+$/.test(s)).map(s=>Number(s.replace(/[^.\d]/g,'')));
         const marca=lines.slice(0,idx).filter(s=>!/^[-\d.,]+%$/.test(s)).at(-1)||'';
@@ -175,7 +187,7 @@ try {
     await menu.goto(host+'/es/home',{waitUntil:'domcontentloaded'});
     await menu.locator(cards).first().waitFor();
     await menu.getByRole('button',{name:'Menú Principal',exact:true}).click();
-    await menu.getByRole('button',{name,exact:true}).last().click();
+    await menu.getByRole('button',{name,exact:true}).filter({visible:true}).last().press('Enter');
     await menu.waitForURL(u=>u.pathname.startsWith('/es/categoria/'));
     const route=new URL(menu.url()).pathname;
     const list=await readdir(root);
